@@ -89,22 +89,22 @@ function getSetting(PDO $pdo, string $key, string $default = ''): string {
     return $settingsCache[$key] ?? $default;
 }
 
-// Status Badges
+// Status Badges (Neo-Skeuomorphic with Glowing LEDs)
 function getStatusBadge(string $status): string {
     $status = strtolower($status);
     switch ($status) {
         case 'aktif':
-            return '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Aktif</span>';
+            return '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-b from-emerald-50 to-emerald-100/80 text-emerald-800 border border-emerald-300 shadow-[0_2px_4px_rgba(16,185,129,0.15)]"><span class="led-pulse active-green"></span>AKTIF</span>';
         case 'cuti':
-            return '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Cuti/Libur</span>';
+            return '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-b from-amber-50 to-amber-100/80 text-amber-800 border border-amber-300 shadow-[0_2px_4px_rgba(245,158,11,0.15)]"><span class="led-pulse active-amber"></span>CUTI / LIBUR</span>';
         case 'isolir':
-            return '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Isolir</span>';
+            return '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-b from-rose-50 to-rose-100/80 text-rose-800 border border-rose-300 shadow-[0_2px_4px_rgba(244,63,94,0.15)]"><span class="led-pulse active-rose"></span>ISOLIR</span>';
         case 'lunas':
-            return '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80"><svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Lunas</span>';
+            return '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-b from-emerald-50 to-emerald-100/80 text-emerald-800 border border-emerald-300 shadow-[0_2px_4px_rgba(16,185,129,0.15)]"><i class="fa-solid fa-circle-check text-emerald-600"></i>LUNAS</span>';
         case 'belum_lunas':
-            return '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200/80"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>Belum Lunas</span>';
+            return '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-b from-rose-50 to-rose-100/80 text-rose-800 border border-rose-300 shadow-[0_2px_4px_rgba(244,63,94,0.15)]"><span class="led-pulse active-rose"></span>BELUM LUNAS</span>';
         default:
-            return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">' . e($status) . '</span>';
+            return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-800">' . e($status) . '</span>';
     }
 }
 

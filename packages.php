@@ -1,14 +1,14 @@
 <?php
 /**
  * Package Management for Rengganis Net
+ * Luxury Neo-Skeuomorphic Layout with AdminLTE Sidebar
  */
 
-$pageTitle = 'Paket Layanan WiFi';
+$pageTitle = 'Paket Bandwidth';
 require_once __DIR__ . '/includes/header.php';
 
 $pdo = getDB();
 
-// Handle CRUD POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdmin()) {
     $action = $_POST['action'] ?? '';
 
@@ -49,11 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdmin()) {
 
     if ($action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
-        // Check if package has subscribers
         $count = $pdo->prepare("SELECT COUNT(*) FROM customers WHERE package_id = ?");
         $count->execute([$id]);
         if ($count->fetchColumn() > 0) {
-            setFlash('error', 'Paket tidak dapat dihapus karena masih digunakan oleh pelanggan.');
+            setFlash('error', 'Paket tidak dapat dihapus karena masih digunakan oleh pelanggan aktif.');
         } else {
             $stmt = $pdo->prepare("DELETE FROM packages WHERE id = ?");
             $stmt->execute([$id]);
@@ -79,53 +78,57 @@ $packages = $pdo->query("
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">Daftar Paket Layanan WiFi</h1>
-            <p class="text-xs md:text-sm text-slate-500">Kelola varian kecepatan bandwidth dan tarif bulanan internet Rengganis Net</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-tech">Paket Layanan Bandwidth</h1>
+            <p class="text-xs text-slate-500 font-medium">Varian kecepatan internet fiber, kuota unlimited, dan tarif bulanan Rengganis Net</p>
         </div>
 
         <?php if (isAdmin()): ?>
-        <button onclick="openAddPackageModal()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 transition-all flex items-center gap-2">
+        <button onclick="openAddPackageModal()" class="px-5 py-2.5 rounded-2xl skeuo-btn-primary text-xs font-black shadow-lg flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> Tambah Paket Baru
         </button>
         <?php endif; ?>
     </div>
 
-    <!-- Package Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Futuristic Hardware-style Package Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <?php foreach ($packages as $pkg): ?>
             <?php $pkgJson = htmlspecialchars(json_encode($pkg), ENT_QUOTES, 'UTF-8'); ?>
-            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+            <div class="neu-flat rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1.5 group border border-white/80">
+                
+                <!-- Metallic Accent Strip -->
+                <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-400"></div>
+
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            <?= e($pkg['speed']) ?>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800 border border-blue-200 shadow-sm font-tech">
+                            <span class="led-pulse active-blue"></span> <?= e($pkg['speed']) ?>
                         </span>
-                        <div class="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                        <div class="text-[11px] font-bold text-slate-500 flex items-center gap-1">
                             <i class="fa-solid fa-users text-slate-400"></i> <?= (int)$pkg['subscriber_count'] ?> User
                         </div>
                     </div>
 
-                    <h3 class="text-base font-extrabold text-slate-900"><?= e($pkg['name']) ?></h3>
-                    <p class="text-xs text-slate-500 mt-1.5 leading-relaxed"><?= e($pkg['description'] ?: 'Tidak ada deskripsi.') ?></p>
+                    <h3 class="text-base font-black text-slate-900 font-tech"><?= e($pkg['name']) ?></h3>
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed font-medium"><?= e($pkg['description'] ?: 'Koneksi unlimited broadband 24/7.') ?></p>
                 </div>
 
-                <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div class="mt-8 pt-4 border-t border-slate-200/60 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] text-slate-400 block uppercase font-bold">Tarif Bulanan</span>
-                        <span class="text-lg font-black text-blue-600"><?= formatRupiah($pkg['price']) ?></span>
+                        <span class="text-[10px] text-slate-400 block uppercase font-black tracking-wider">Tarif Bulanan</span>
+                        <span class="text-lg font-black text-blue-700 font-mono"><?= formatRupiah($pkg['price']) ?></span>
                     </div>
 
                     <?php if (isAdmin()): ?>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick='openEditPackageModal(<?= $pkgJson ?>)' class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition-colors" title="Edit Paket">
-                            <i class="fa-solid fa-pen"></i>
+                    <div class="flex items-center gap-2">
+                        <button onclick='openEditPackageModal(<?= $pkgJson ?>)' class="w-8 h-8 rounded-xl skeuo-btn-secondary text-slate-700 flex items-center justify-center" title="Edit Paket">
+                            <i class="fa-solid fa-pen text-xs"></i>
                         </button>
                         <?php if ((int)$pkg['subscriber_count'] === 0): ?>
                         <form action="packages.php" method="POST" onsubmit="return confirm('Hapus paket ini?')" class="inline">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= $pkg['id'] ?>">
-                            <button type="submit" class="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs transition-colors" title="Hapus Paket">
-                                <i class="fa-solid fa-trash"></i>
+                            <button type="submit" class="w-8 h-8 rounded-xl skeuo-btn-secondary text-rose-600 flex items-center justify-center" title="Hapus Paket">
+                                <i class="fa-solid fa-trash text-xs"></i>
                             </button>
                         </form>
                         <?php endif; ?>
@@ -139,69 +142,69 @@ $packages = $pdo->query("
 </div>
 
 <!-- MODAL TAMBAH PAKET -->
-<div id="addPackageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6">
-        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+<div id="addPackageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
+    <div class="bg-[#edf3f9] rounded-3xl max-w-md w-full shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-white/80 overflow-hidden p-6">
+        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2 font-tech">
             <i class="fa-solid fa-cubes text-blue-600"></i> Tambah Paket WiFi
         </h3>
-        <form action="packages.php" method="POST" class="space-y-3 text-xs">
+        <form action="packages.php" method="POST" class="space-y-3.5 text-xs">
             <input type="hidden" name="action" value="create">
             <div>
-                <label class="block font-bold text-slate-700 mb-1">Nama Paket</label>
-                <input type="text" name="name" required placeholder="Contoh: Paket Gamer 50 Mbps" class="w-full p-2.5 border rounded-xl">
+                <label class="block font-bold text-slate-700 mb-1">Nama Paket *</label>
+                <input type="text" name="name" required placeholder="Contoh: Paket Gaming Ultra 50 Mbps" class="neu-input w-full p-2.5 rounded-xl font-bold">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kecepatan</label>
-                    <input type="text" name="speed" required placeholder="Contoh: 50 Mbps" class="w-full p-2.5 border rounded-xl">
+                    <label class="block font-bold text-slate-700 mb-1">Kecepatan *</label>
+                    <input type="text" name="speed" required placeholder="Contoh: 50 Mbps" class="neu-input w-full p-2.5 rounded-xl font-bold font-mono">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Harga Bulanan (Rp)</label>
-                    <input type="number" name="price" required placeholder="300000" class="w-full p-2.5 border rounded-xl">
+                    <label class="block font-bold text-slate-700 mb-1">Harga Bulanan (Rp) *</label>
+                    <input type="number" name="price" required placeholder="300000" class="neu-input w-full p-2.5 rounded-xl font-bold font-mono">
                 </div>
             </div>
             <div>
-                <label class="block font-bold text-slate-700 mb-1">Deskripsi</label>
-                <textarea name="description" rows="2" placeholder="Keterangan peruntukan paket..." class="w-full p-2.5 border rounded-xl"></textarea>
+                <label class="block font-bold text-slate-700 mb-1">Deskripsi Paket</label>
+                <textarea name="description" rows="2" placeholder="Keterangan peruntukan perangkat..." class="neu-input w-full p-2.5 rounded-xl font-medium"></textarea>
             </div>
-            <div class="pt-2 flex gap-2">
-                <button type="button" onclick="closeAddPackageModal()" class="w-1/3 py-2.5 border rounded-xl">Batal</button>
-                <button type="submit" class="w-2/3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow">Simpan</button>
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeAddPackageModal()" class="w-1/3 py-2.5 rounded-xl skeuo-btn-secondary font-bold">Batal</button>
+                <button type="submit" class="w-2/3 py-2.5 rounded-xl skeuo-btn-primary font-black shadow-lg">Simpan</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- MODAL EDIT PAKET -->
-<div id="editPackageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6">
-        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+<div id="editPackageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
+    <div class="bg-[#edf3f9] rounded-3xl max-w-md w-full shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-white/80 overflow-hidden p-6">
+        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2 font-tech">
             <i class="fa-solid fa-pen text-blue-600"></i> Edit Paket WiFi
         </h3>
-        <form action="packages.php" method="POST" class="space-y-3 text-xs">
+        <form action="packages.php" method="POST" class="space-y-3.5 text-xs">
             <input type="hidden" name="action" value="edit">
             <input type="hidden" id="editPkgId" name="id" value="">
             <div>
-                <label class="block font-bold text-slate-700 mb-1">Nama Paket</label>
-                <input type="text" id="editPkgName" name="name" required class="w-full p-2.5 border rounded-xl">
+                <label class="block font-bold text-slate-700 mb-1">Nama Paket *</label>
+                <input type="text" id="editPkgName" name="name" required class="neu-input w-full p-2.5 rounded-xl font-bold">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kecepatan</label>
-                    <input type="text" id="editPkgSpeed" name="speed" required class="w-full p-2.5 border rounded-xl">
+                    <label class="block font-bold text-slate-700 mb-1">Kecepatan *</label>
+                    <input type="text" id="editPkgSpeed" name="speed" required class="neu-input w-full p-2.5 rounded-xl font-bold font-mono">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Harga Bulanan (Rp)</label>
-                    <input type="number" id="editPkgPrice" name="price" required class="w-full p-2.5 border rounded-xl">
+                    <label class="block font-bold text-slate-700 mb-1">Harga Bulanan (Rp) *</label>
+                    <input type="number" id="editPkgPrice" name="price" required class="neu-input w-full p-2.5 rounded-xl font-bold font-mono">
                 </div>
             </div>
             <div>
                 <label class="block font-bold text-slate-700 mb-1">Deskripsi</label>
-                <textarea id="editPkgDesc" name="description" rows="2" class="w-full p-2.5 border rounded-xl"></textarea>
+                <textarea id="editPkgDesc" name="description" rows="2" class="neu-input w-full p-2.5 rounded-xl font-medium"></textarea>
             </div>
-            <div class="pt-2 flex gap-2">
-                <button type="button" onclick="closeEditPackageModal()" class="w-1/3 py-2.5 border rounded-xl">Batal</button>
-                <button type="submit" class="w-2/3 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow">Simpan Perubahan</button>
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeEditPackageModal()" class="w-1/3 py-2.5 rounded-xl skeuo-btn-secondary font-bold">Batal</button>
+                <button type="submit" class="w-2/3 py-2.5 rounded-xl skeuo-btn-dark font-black shadow-lg">Simpan</button>
             </div>
         </form>
     </div>
