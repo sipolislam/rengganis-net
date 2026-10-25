@@ -1,0 +1,36 @@
+# Rahasia dan lingkungan
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependensi dan build
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
+.cache/
+*.tsbuildinfo
+
+# Python (bila backend Python)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor dan sistem
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+npm-debug.log*

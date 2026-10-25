@@ -1,0 +1,29 @@
+# CI dirender dari SPEC.json (stack.ecosystems dan stack.commands).
+# Perintah harus identik dengan docs/EVALS.md, docs/TESTING.md, dan AGENTS.md.
+# Periksa versi action terbaru tiap semester; untuk produksi pin action ke SHA commit.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest  # sesuaikan dengan versi yang dipakai proyek
+      - name: Instal dependensi
+        run: php -v
+      - name: Lint
+        run: php -l index.php
+      - name: Tes
+        run: php tests/test_all_requirements.php
+      - name: Build
+        run: php -v

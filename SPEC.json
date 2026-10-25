@@ -1,0 +1,326 @@
+{
+  "meta": {
+    "app_name": "Rengganis Net",
+    "slug": "rengganis-net",
+    "one_liner": "Sistem informasi manajemen operasional, penagihan WiFi bulanan bebas tagihan fiktif cuti, dan cetak struk Bluetooth ESC/POS.",
+    "platform": "web",
+    "level": "dasar",
+    "language": "id",
+    "ai_tools": [
+      "antigravity"
+    ],
+    "team_size": 1,
+    "duration_weeks": 4,
+    "delegated_questions": [
+      "C-03",
+      "C-04",
+      "C-05",
+      "C-20",
+      "C-06",
+      "C-07",
+      "C-08",
+      "C-09",
+      "C-16",
+      "W-01",
+      "W-03",
+      "W-04",
+      "W-05",
+      "W-06",
+      "W-07",
+      "W-09",
+      "C-10",
+      "C-11",
+      "C-13"
+    ],
+    "secondary_platforms": [],
+    "starting_point": "existing",
+    "created_date": "2026-10-25",
+    "assistant_proposed": [
+      "problem.who",
+      "users[0].quote",
+      "users[1].quote",
+      "metrics",
+      "non_goals",
+      "design",
+      "student_reflection.risk_controls"
+    ]
+  },
+  "problem": {
+    "statement": "Petugas penagih masih mendatangi rumah pelanggan satu per satu secara manual, proses pembayaran lambat, dan tidak menghemat waktu serta tenaga pengelola.",
+    "who": "Pengelola, kolektor/kasir lapangan, dan pelanggan layanan internet WiFi RT/RW Net Rengganis Net.",
+    "current_alternative": "Penagihan manual door-to-door dengan pencatatan buku fisik dan komunikasi manual via chat grup."
+  },
+  "goals": [
+    "Mengotomatisasi pembuatan tagihan bulanan dan pengiriman notifikasi tagihan via WhatsApp dengan opsi pembayaran online dan offline.",
+    "Menyediakan pencatatan pelunasan instan dengan bukti pembayaran struk fisik thermal Bluetooth ESC/POS serta struk digital."
+  ],
+  "non_goals": [
+    "Membangun aplikasi mobile native APK terpisah di Google Play Store.",
+    "Integrasi payment gateway otomatis berbayar pihak ketiga seperti Midtrans atau Xendit pada versi ini."
+  ],
+  "users": [
+    {
+      "persona": "Kolektor / Kasir Lapangan",
+      "need": "Mengetahui daftar tagihan pelanggan dan mencetak struk fisik via printer Bluetooth langsung di lokasi pelanggan tanpa salah catat.",
+      "quote": "Setiap akhir bulan saya lelah menagih pintu ke pintu secara manual; rawan salah catat dan banyak warga tidak di rumah."
+    },
+    {
+      "persona": "Pelanggan WiFi Rumahan",
+      "need": "Menerima rincian tagihan secara tepat waktu melalui WhatsApp dengan opsi bayar online atau tunai yang jelas.",
+      "quote": "Saya ingin tahu tagihan lewat WhatsApp dan bisa bayar via transfer tanpa menunggu didatangi petugas."
+    }
+  ],
+  "user_conditions": [
+    "Sebagian besar petugas menggunakan ponsel Android kelas menengah di lapangan",
+    "Aplikasi digunakan di luar ruangan di bawah sinar matahari saat penagihan",
+    "Antarmuka wajib berbahasa Indonesia yang intuitif bagi pengguna awam"
+  ],
+  "features": [
+    {
+      "id": "F1",
+      "name": "Autentikasi dan otorisasi multi-role",
+      "description": "Sistem login berbasis sesi dengan enkripsi password bcrypt untuk peran Admin, Kolektor/Kasir, dan Teknisi.",
+      "priority": "must",
+      "acceptance": [
+        "Jika pengguna memasukkan username dan password valid, sistem membuka sesi sesuai peran dan mengarahkan ke dasbor.",
+        "Jika peran adalah Teknisi atau Kolektor yang mencoba mengakses menu Pengaturan Sistem atau Manajemen User, server menolak akses dengan status 403 atau pesan peringatan hak akses.",
+        "Jika password salah, sistem menampilkan notifikasi kesalahan tanpa membocorkan eksistensi data pengguna lain."
+      ]
+    },
+    {
+      "id": "F2",
+      "name": "Kelola data pelanggan dan status layanan",
+      "description": "Pengelolaan data master pelanggan dengan status Aktif, Cuti, dan Isolir disertai pencatatan riwayat audit status_logs.",
+      "priority": "must",
+      "acceptance": [
+        "Jika admin menambahkan pelanggan baru dengan paket valid, data tersimpan di database dan muncul pada tabel pelanggan.",
+        "Jika status pelanggan diubah menjadi cuti, sistem mencatat riwayat perubahan ke tabel status_logs berisi status lama, status baru, waktu, dan user pengubah.",
+        "Jika pelanggan berstatus cuti diaktifkan kembali di pertengahan bulan berjalan, sistem langsung menerbitkan tagihan bulan berjalan untuk pelanggan tersebut."
+      ]
+    },
+    {
+      "id": "F3",
+      "name": "Pembuatan tagihan bulanan otomatis",
+      "description": "Batch billing engine untuk membuat tagihan seluruh pelanggan aktif tiap bulan dengan pencegahan tagihan ganda dan pengecualian pelanggan cuti.",
+      "priority": "must",
+      "acceptance": [
+        "Jika batch billing dijalankan untuk periode bulan dan tahun tertentu, sistem hanya menerbitkan tagihan baru untuk pelanggan berstatus aktif.",
+        "Jika pelanggan berstatus cuti, sistem secara otomatis melewatkan pelanggan tersebut sehingga menghasilkan 0 tagihan baru tanpa denda fiktif.",
+        "Jika proses generate tagihan dijalankan ulang pada periode yang sama, sistem menghasilkan 0 tagihan baru karena pencegahan duplikasi tagihan (idempotensi)."
+      ]
+    },
+    {
+      "id": "F4",
+      "name": "Notifikasi tagihan dan pembayaran WhatsApp",
+      "description": "Pembuatan pesan otomatis WhatsApp melalui tautan wa.me dengan rincian tagihan dan 2 cabang opsi pembayaran (Online QR dan Offline Tunai Pas).",
+      "priority": "must",
+      "acceptance": [
+        "Jika tombol kirim WhatsApp tagihan ditekan, sistem membuka tautan wa.me berisi rincian nama pelanggan, periode, nominal, opsi transfer online dengan kode QR, dan opsi offline dengan teks siapkan uang tunai pas.",
+        "Jika tombol kirim WhatsApp bukti pelunasan ditekan pada tagihan lunas, sistem menghasilkan teks konfirmasi pembayaran resmi beserta nomor referensi transaksi."
+      ]
+    },
+    {
+      "id": "F5",
+      "name": "Pencatatan pelunasan dan cetak struk Bluetooth",
+      "description": "Konfirmasi pelunasan tagihan sekali klik dengan multi-metode bayar, pencetakan struk thermal Bluetooth ESC/POS 58mm/80mm, dan unduh struk PNG.",
+      "priority": "must",
+      "acceptance": [
+        "Jika kasir mencatat pelunasan dengan metode bayar valid, status tagihan berubah menjadi lunas, tanggal bayar tercatat, dan modal struk otomatis terbuka.",
+        "Jika tombol cetak Bluetooth ditekan dan printer terhubung via Web Bluetooth API, perintah ESC/POS terkirim dan struk tercetak pada kertas thermal 58mm/80mm.",
+        "Jika koneksi Bluetooth gagal atau tidak tersedia, sistem tidak mengalami crash dan menyediakan fallback cetak browser (@media print) atau tombol unduh struk format PNG."
+      ]
+    },
+    {
+      "id": "F6",
+      "name": "Laporan keuangan dan ekspor data",
+      "description": "Rekapitulasi pemasukan harian dan bulanan, pelacakan collection rate, dan ekspor laporan ke format CSV dan Excel.",
+      "priority": "should",
+      "acceptance": [
+        "Jika pengguna memilih rentang tanggal atau bulan pada laporan, sistem menampilkan total omzet yang sesuai dengan penjumlahan tagihan berstatus lunas.",
+        "Jika tombol ekspor CSV atau Excel ditekan, browser mengunduh berkas spreadsheet berisi tabel rincian transaksi lengkap dengan header dan baris ringkasan KPI."
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Akurasi penerbitan tagihan pelanggan cuti",
+      "target": "100% akurat (0 tagihan fiktif)",
+      "how_measured": "Menjalankan skrip verifikasi otomatis tests/test_all_requirements.php pada pelanggan berstatus cuti"
+    },
+    {
+      "name": "Pencegahan tagihan duplikat saat batch billing",
+      "target": "0 tagihan ganda (idempoten)",
+      "how_measured": "Menjalankan batch generate tagihan dua kali berturut-turut pada periode yang sama dan memverifikasi tagihan baru bernilai 0"
+    },
+    {
+      "name": "Efisiensi waktu penyampaian tagihan dan bukti bayar",
+      "target": "Waktu berkurang minimal 60% dibanding metode manual door-to-door",
+      "how_measured": "Waktu rata-rata pengiriman notifikasi tagihan WhatsApp dan cetak struk Bluetooth per transaksi di bawah 1 menit"
+    }
+  ],
+  "stack": {
+    "frontend": "Tailwind CSS, Vanilla JavaScript, FontAwesome 6, Google Fonts (Plus Jakarta Sans & JetBrains Mono), Web Bluetooth API ESC/POS, html2canvas",
+    "backend": "PHP 8.4 Native dengan PDO MySQL, session management, dan password_hash bcrypt",
+    "database": "MySQL 8.0 / MariaDB (database rengganis_net)",
+    "auth": "Session-based authentication dengan enkripsi kata sandi bcrypt dan token proteksi CSRF",
+    "hosting": "Server On-Premise Mini PC / Laragon Apache / Linux VPS",
+    "testing": "Skrip verifikasi otomatis PHP (php tests/test_all_requirements.php)",
+    "keywords": [
+      "PHP",
+      "MySQL",
+      "Tailwind CSS",
+      "Web Bluetooth ESC/POS",
+      "Laragon"
+    ],
+    "extra": [
+      "Web Bluetooth API untuk printer thermal Bluetooth 58mm/80mm",
+      "html2canvas untuk render struk pembayaran digital ke gambar PNG",
+      "WhatsApp Click-to-Chat API (wa.me) dengan template notifikasi tagihan"
+    ],
+    "source": "custom",
+    "custom_reason": "Melanjutkan dan mengaudit codebase operasional yang sudah berjalan di repositori ini",
+    "custom_layers": [
+      "frontend",
+      "backend",
+      "database",
+      "auth",
+      "testing",
+      "hosting"
+    ],
+    "ecosystems": [
+      "php"
+    ],
+    "commands": {
+      "install": "php -v",
+      "dev": "php -S 127.0.0.1:8080",
+      "lint": "php -l index.php",
+      "typecheck": "",
+      "test": "php tests/test_all_requirements.php",
+      "build": "php -v",
+      "ci_setup": ""
+    },
+    "versions": [
+      "PHP 8.4",
+      "MySQL 8.0"
+    ]
+  },
+  "data": {
+    "entities": [
+      {
+        "name": "users",
+        "fields": [
+          "id",
+          "username",
+          "password",
+          "name",
+          "role (admin/teknisi/kolektor)",
+          "created_at"
+        ]
+      },
+      {
+        "name": "customers",
+        "fields": [
+          "id",
+          "customer_code",
+          "name",
+          "phone",
+          "address",
+          "package_id",
+          "ip_address",
+          "installed_date",
+          "status (aktif/cuti/isolir)",
+          "notes"
+        ]
+      },
+      {
+        "name": "packages",
+        "fields": [
+          "id",
+          "name",
+          "speed",
+          "price",
+          "description",
+          "is_active"
+        ]
+      },
+      {
+        "name": "bills",
+        "fields": [
+          "id",
+          "bill_no",
+          "customer_id",
+          "period_month",
+          "period_year",
+          "amount",
+          "status (belum_lunas/lunas)",
+          "payment_method",
+          "payment_date",
+          "collector_name",
+          "notes"
+        ]
+      },
+      {
+        "name": "status_logs",
+        "fields": [
+          "id",
+          "customer_id",
+          "old_status",
+          "new_status",
+          "notes",
+          "changed_by",
+          "created_at"
+        ]
+      },
+      {
+        "name": "settings",
+        "fields": [
+          "id",
+          "setting_key",
+          "setting_value"
+        ]
+      }
+    ],
+    "personal_data": "location_contact",
+    "sensitive_notes": "Menyimpan nama, nomor telepon WhatsApp, alamat pelanggan, dan IP address. Dilindungi dengan sanitasi input PDO prepared statements, proteksi sesi, dan pembatasan hak akses multi-role."
+  },
+  "security": {
+    "roles": [
+      "admin",
+      "teknisi",
+      "kolektor"
+    ],
+    "auth_method": "Login berbasis sesi PHP dengan enkripsi password bcrypt dan token validasi CSRF",
+    "secrets_handling": "Kredensial database disimpan di config/database.php atau .env lokal yang tidak di-commit ke repositori publik"
+  },
+  "ai_in_app": {
+    "mode": "none",
+    "purpose": ""
+  },
+  "design": {
+    "tone": "Modern, profesional, dan efisien untuk operasional lapangan",
+    "primary_color": "#1E3A8A",
+    "font": "Plus Jakarta Sans & JetBrains Mono",
+    "dark_mode": true
+  },
+  "platform_specific": {
+    "web": {
+      "rendering": "server-rendered-php",
+      "i18n": false,
+      "seo": false
+    }
+  },
+  "risks": [
+    "Koneksi Web Bluetooth API ke printer thermal mini terputus saat kasir melakukan penagihan di lapangan.",
+    "Potensi tagihan ganda atau tagihan salah sasaran untuk pelanggan cuti saat batch billing bulanan dijalankan.",
+    "Pesan notifikasi tagihan WhatsApp diabaikan atau pelanggan bingung memilih cara bayar online vs offline."
+  ],
+  "student_reflection": {
+    "biggest_risk": "data pelanggan/tagihan salah hitung atau dobel saat generate bulanan, koneksi Bluetooth ke printer thermal terputus di lapangan, atau pelanggan mengabaikan pesan notifikasi tagihan di WhatsApp). nah jika ada balasan dari pelanggan saya ingin pesan dari admin ada kata pembayaran online / ofline jika memilih online tolong kirimkan link atau apa untuk otomatiskan ke pembayaranan menggunakan kode qr jika melilih offline tolong dalam pesennya ada kata siapkan uang tunai sejumlah tagihannya",
+    "why_this_project": "ingin membantu digitalisasi usaha internet RT/RW Net lokal agar tidak perlu menagih door-to-door, ingin menguasai pembuatan sistem web operasional real-world).",
+    "risk_controls": [
+      "Sistem menerapkan database unique constraint pada (customer_id, period_month, period_year) dan validasi idempotensi saat generate tagihan; pelanggan berstatus cuti otomatis dilewati tanpa tagihan.",
+      "Template pesan notifikasi WhatsApp menyertakan dua opsi pembayaran terstruktur: Opsi Online dengan tautan QRIS/pembayaran dan Opsi Offline dengan instruksi menyiapkan uang tunai pas sejumlah tagihan.",
+      "Antarmuka cetak menyediakan tombol reconnect Bluetooth dan fallback cetak standar browser (@media print 58mm/80mm) serta ekspor struk gambar PNG agar tidak hang jika printer terputus."
+    ]
+  }
+}

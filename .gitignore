@@ -1,14 +1,47 @@
-# Logs
-*.log
-scratch/
+# Rahasia dan lingkungan
+.env
+.env.*
+!.env.example
+*.pem
+*.key
 
-# IDE / Editor
+# Dependensi dan build
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
+.cache/
+*.tsbuildinfo
+
+# Python (bila backend Python)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor dan sistem
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 .idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
-
-# OS Files
 .DS_Store
 Thumbs.db
 desktop.ini
+scratch/
+
+# Log
+*.log
+npm-debug.log*
+
+# Tambahan untuk ekosistem: php
+vendor/
+storage/*.key
+storage/logs/
+bootstrap/cache/*.php
+.phpunit.result.cache
+public/hot
+public/storage

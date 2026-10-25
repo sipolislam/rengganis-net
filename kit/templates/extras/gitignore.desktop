@@ -1,0 +1,41 @@
+# Rahasia dan lingkungan
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+
+# Dependensi dan build
+node_modules/
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# Rust/Tauri
+target/
+src-tauri/target/
+src-tauri/gen/
+
+# Electron
+release/
+*.exe
+*.dmg
+*.AppImage
+*.msi
+
+# Editor dan sistem
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+npm-debug.log*

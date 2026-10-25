@@ -1,0 +1,185 @@
+{
+  "kit_version": "1.2.0",
+  "baseline_date": "2026-10-20",
+  "files": [
+    {
+      "template": "PRD.md",
+      "output": "docs/PRD.md",
+      "batch": 1,
+      "min_words": 350
+    },
+    {
+      "template": "ARCHITECTURE.md",
+      "output": "docs/ARCHITECTURE.md",
+      "batch": 1,
+      "min_words": 400
+    },
+    {
+      "template": "DESIGN_SYSTEM.md",
+      "output": "docs/DESIGN_SYSTEM.md",
+      "batch": 1,
+      "min_words": 350
+    },
+    {
+      "template": "SECURITY.md",
+      "output": "docs/SECURITY.md",
+      "batch": 2,
+      "min_words": 500
+    },
+    {
+      "template": "CODE_STYLE.md",
+      "output": "docs/CODE_STYLE.md",
+      "batch": 2,
+      "min_words": 350
+    },
+    {
+      "template": "TESTING.md",
+      "output": "docs/TESTING.md",
+      "batch": 2,
+      "min_words": 350
+    },
+    {
+      "template": "EVALS.md",
+      "output": "docs/EVALS.md",
+      "batch": 2,
+      "min_words": 300
+    },
+    {
+      "template": "WORKFLOW.md",
+      "output": "docs/WORKFLOW.md",
+      "batch": 3,
+      "min_words": 350
+    },
+    {
+      "template": "GUARDRAILS.md",
+      "output": "docs/GUARDRAILS.md",
+      "batch": 3,
+      "min_words": 350
+    },
+    {
+      "template": "AGENTS.md",
+      "output": "AGENTS.md",
+      "batch": 3,
+      "min_words": 250
+    },
+    {
+      "template": "TASKS.md",
+      "output": "docs/TASKS.md",
+      "batch": 4,
+      "min_words": 350
+    },
+    {
+      "template": "PROGRESS.md",
+      "output": "docs/PROGRESS.md",
+      "batch": 4,
+      "min_words": 120
+    },
+    {
+      "template": "DECISIONS.md",
+      "output": "docs/DECISIONS.md",
+      "batch": 4,
+      "min_words": 300
+    },
+    {
+      "template": "REVIEW.md",
+      "output": "docs/REVIEW.md",
+      "batch": 5,
+      "min_words": 300
+    },
+    {
+      "template": "LESSONS.md",
+      "output": "docs/LESSONS.md",
+      "batch": 5,
+      "min_words": 200
+    },
+    {
+      "template": "README.md",
+      "output": "README.md",
+      "batch": 5,
+      "min_words": 200
+    }
+  ],
+  "conditional": [
+    {
+      "when": {
+        "platform": "iot"
+      },
+      "template": "extras/HARDWARE.md",
+      "output": "docs/HARDWARE.md",
+      "batch": 5,
+      "min_words": 250
+    },
+    {
+      "when": {
+        "level": "loop"
+      },
+      "template": "extras/LOOP.md",
+      "output": "docs/LOOP.md",
+      "batch": 5,
+      "min_words": 250
+    }
+  ],
+  "feature_id_files": [
+    "docs/PRD.md",
+    "docs/TASKS.md",
+    "docs/EVALS.md"
+  ],
+  "app_name_files": [
+    "README.md",
+    "docs/PRD.md",
+    "AGENTS.md"
+  ],
+  "stack_keyword_files": [
+    "docs/ARCHITECTURE.md",
+    "AGENTS.md"
+  ],
+  "agents_max_lines_warn": 150,
+  "agents_max_lines_fail": 220,
+  "min_tasks": 8,
+  "min_adrs": 5,
+  "task_statuses": [
+    "todo",
+    "doing",
+    "review",
+    "done",
+    "blocked"
+  ],
+  "filler_patterns": [
+    "lorem ipsum",
+    "tbd",
+    "isi di sini",
+    "to be filled",
+    "your text here",
+    "[nama aplikasi]",
+    "<nama aplikasi>",
+    "contoh.com/isi",
+    "diisi saat sesi pertama",
+    "tanggal diisi"
+  ],
+  "stale_patterns": [
+    "create-react-app",
+    "react-native init",
+    "OWASP Top 10:2021",
+    "OWASP Top 10 2021",
+    "Next.js 13",
+    "Next.js 14",
+    "Node 16",
+    "Node.js 16",
+    "Node 18",
+    "Node.js 18",
+    "Python 3.8",
+    "Tauri 1"
+  ],
+  "owasp_codes": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06",
+    "A07",
+    "A08",
+    "A09",
+    "A10"
+  ]
+}
