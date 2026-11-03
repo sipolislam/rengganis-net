@@ -1,0 +1,12 @@
+# Dirender dari stack.ecosystems di SPEC.json. Sesuaikan 'directory' bila manifest ada di subfolder.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

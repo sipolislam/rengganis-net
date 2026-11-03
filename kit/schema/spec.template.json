@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "app_name": "",
+    "slug": "",
+    "one_liner": "",
+    "platform": "web",
+    "level": "dasar",
+    "language": "id",
+    "ai_tools": [],
+    "team_size": 1,
+    "duration_weeks": 4,
+    "delegated_questions": [],
+    "secondary_platforms": [],
+    "starting_point": "new",
+    "created_date": "",
+    "assistant_proposed": []
+  },
+  "problem": {
+    "statement": "",
+    "who": "",
+    "current_alternative": ""
+  },
+  "goals": [
+    "",
+    ""
+  ],
+  "non_goals": [
+    ""
+  ],
+  "users": [
+    {
+      "persona": "",
+      "need": "",
+      "quote": ""
+    }
+  ],
+  "user_conditions": [],
+  "features": [
+    {
+      "id": "F1",
+      "name": "",
+      "description": "",
+      "priority": "must",
+      "acceptance": [
+        "",
+        ""
+      ]
+    },
+    {
+      "id": "F2",
+      "name": "",
+      "description": "",
+      "priority": "must",
+      "acceptance": [
+        "",
+        ""
+      ]
+    },
+    {
+      "id": "F3",
+      "name": "",
+      "description": "",
+      "priority": "should",
+      "acceptance": [
+        "",
+        ""
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "name": "",
+      "target": "",
+      "how_measured": ""
+    },
+    {
+      "name": "",
+      "target": "",
+      "how_measured": ""
+    }
+  ],
+  "stack": {
+    "frontend": "",
+    "backend": "",
+    "database": "",
+    "auth": "",
+    "hosting": "",
+    "testing": "",
+    "keywords": [
+      "",
+      "",
+      ""
+    ],
+    "extra": [],
+    "source": "recommended",
+    "custom_reason": "",
+    "custom_layers": [],
+    "ecosystems": [
+      "node"
+    ],
+    "commands": {
+      "install": "",
+      "dev": "",
+      "lint": "",
+      "typecheck": "",
+      "test": "",
+      "build": "",
+      "ci_setup": ""
+    },
+    "versions": []
+  },
+  "data": {
+    "entities": [
+      {
+        "name": "",
+        "fields": [
+          "",
+          ""
+        ]
+      }
+    ],
+    "personal_data": "basic",
+    "sensitive_notes": ""
+  },
+  "security": {
+    "roles": [
+      ""
+    ],
+    "auth_method": "",
+    "secrets_handling": ".env lokal, tidak di-commit; nilai produksi di pengelola rahasia hosting"
+  },
+  "ai_in_app": {
+    "mode": "none",
+    "purpose": ""
+  },
+  "design": {
+    "tone": "",
+    "primary_color": "#2563EB",
+    "font": "",
+    "dark_mode": true
+  },
+  "platform_specific": {
+    "web": {
+      "rendering": "fullstack-framework",
+      "i18n": false,
+      "seo": false
+    }
+  },
+  "risks": [
+    "",
+    ""
+  ],
+  "student_reflection": {
+    "biggest_risk": "",
+    "why_this_project": "",
+    "risk_controls": [
+      ""
+    ]
+  }
+}

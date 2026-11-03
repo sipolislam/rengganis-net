@@ -1,0 +1,47 @@
+# Rahasia dan lingkungan
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+*.p8
+*.p12
+*.mobileprovision
+
+# Dependensi dan build
+node_modules/
+.expo/
+dist/
+web-build/
+build/
+coverage/
+*.tsbuildinfo
+
+# Native hasil prebuild (jika memakai Expo managed/CNG)
+/android
+/ios
+
+# Android/iOS lokal
+.gradle/
+local.properties
+*.apk
+*.aab
+Pods/
+DerivedData/
+
+# Editor dan sistem
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+npm-debug.log*
+yarn-debug.log*

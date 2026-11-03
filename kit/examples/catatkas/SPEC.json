@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "app_name": "CatatKas",
+    "slug": "catatkas",
+    "one_liner": "Pencatatan kas organisasi mahasiswa yang transparan dan bebas selisih saldo.",
+    "platform": "web",
+    "level": "menengah",
+    "language": "id",
+    "ai_tools": [
+      "Claude Code",
+      "Cursor"
+    ],
+    "team_size": 2,
+    "duration_weeks": 4,
+    "delegated_questions": [
+      "W-06"
+    ],
+    "secondary_platforms": [],
+    "starting_point": "new",
+    "created_date": "2026-10-20",
+    "assistant_proposed": []
+  },
+  "problem": {
+    "statement": "Kas organisasi mahasiswa dicatat di buku atau spreadsheet yang diedit banyak orang, sehingga saldo sering selisih dan sulit dilacak asal perubahannya.",
+    "who": "Bendahara dan pengurus organisasi mahasiswa tingkat jurusan, serta anggota yang ingin melihat penggunaan iuran.",
+    "current_alternative": "Buku kas fisik dan spreadsheet bersama yang dibagikan lewat grup chat."
+  },
+  "goals": [
+    "Bendahara dapat mencatat satu transaksi kas dalam 30 detik atau kurang.",
+    "Saldo yang tampil selalu sama dengan jumlah seluruh pemasukan dikurangi pengeluaran yang tercatat."
+  ],
+  "non_goals": [
+    "Integrasi pembayaran atau transfer bank otomatis.",
+    "Aplikasi mobile native; cukup web yang nyaman di ponsel."
+  ],
+  "users": [
+    {
+      "persona": "Bendahara organisasi",
+      "need": "Mencatat dan memperbaiki transaksi dengan cepat tanpa takut saldo rusak.",
+      "quote": "Saya mau tahu persis siapa mengubah apa dan kapan."
+    },
+    {
+      "persona": "Anggota biasa",
+      "need": "Melihat saldo dan penggunaan iuran tanpa harus bertanya ke bendahara.",
+      "quote": "Saya ingin yakin uang iuran dipakai untuk kegiatan."
+    }
+  ],
+  "user_conditions": [
+    "Koneksi internet kampus sering lambat",
+    "Sebagian besar anggota memakai ponsel Android kelas menengah"
+  ],
+  "features": [
+    {
+      "id": "F1",
+      "name": "Login anggota",
+      "description": "Anggota masuk dengan email dan kata sandi lewat layanan autentikasi terkelola.",
+      "priority": "must",
+      "acceptance": [
+        "Jika email terdaftar dan kata sandi benar, pengguna masuk dan diarahkan ke dasbor.",
+        "Jika kata sandi salah, pengguna melihat pesan galat umum tanpa membocorkan apakah email terdaftar."
+      ]
+    },
+    {
+      "id": "F2",
+      "name": "Catat transaksi kas",
+      "description": "Bendahara menambah, mengubah, dan menghapus transaksi pemasukan atau pengeluaran dengan kategori, nominal, tanggal, dan catatan.",
+      "priority": "must",
+      "acceptance": [
+        "Jika bendahara menyimpan transaksi valid, transaksi muncul di daftar dan saldo berubah sesuai.",
+        "Jika nominal bukan angka positif, formulir menolak dan menunjukkan pesan yang jelas.",
+        "Jika transaksi diubah atau dihapus, tercatat riwayat perubahan berisi siapa dan kapan."
+      ]
+    },
+    {
+      "id": "F3",
+      "name": "Dasbor saldo",
+      "description": "Halaman utama menampilkan saldo terkini dan ringkasan pemasukan dan pengeluaran bulan berjalan.",
+      "priority": "must",
+      "acceptance": [
+        "Saldo di dasbor sama dengan total pemasukan dikurangi total pengeluaran di daftar transaksi.",
+        "Ringkasan bulan berjalan berubah saat transaksi baru disimpan tanpa memuat ulang manual."
+      ]
+    },
+    {
+      "id": "F4",
+      "name": "Peran bendahara dan anggota",
+      "description": "Hanya bendahara yang dapat menambah, mengubah, atau menghapus transaksi; anggota hanya dapat melihat.",
+      "priority": "must",
+      "acceptance": [
+        "Jika anggota mencoba menambah transaksi lewat antarmuka atau permintaan langsung ke API, server menolak dengan status 403.",
+        "Jika bendahara membuka halaman transaksi, tombol tambah, ubah, dan hapus tersedia."
+      ]
+    },
+    {
+      "id": "F5",
+      "name": "Ekspor laporan bulanan PDF",
+      "description": "Bendahara mengunduh laporan kas satu bulan dalam format PDF.",
+      "priority": "should",
+      "acceptance": [
+        "Jika bendahara memilih bulan dan menekan ekspor, berkas PDF terunduh berisi daftar transaksi dan saldo akhir bulan.",
+        "Jika bulan yang dipilih tidak punya transaksi, PDF tetap dibuat dan menyatakan tidak ada transaksi."
+      ]
+    },
+    {
+      "id": "F6",
+      "name": "Unggah bukti transaksi",
+      "description": "Bendahara melampirkan foto nota atau kuitansi pada sebuah transaksi.",
+      "priority": "could",
+      "acceptance": [
+        "Jika bendahara mengunggah gambar JPG atau PNG di bawah batas ukuran, gambar tertaut ke transaksi dan dapat dilihat anggota.",
+        "Jika berkas bukan gambar atau melewati batas ukuran, unggahan ditolak dengan pesan jelas."
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Waktu mencatat satu transaksi",
+      "target": "30 detik atau kurang",
+      "how_measured": "Uji coba dengan bendahara memakai stopwatch pada 10 transaksi"
+    },
+    {
+      "name": "Selisih saldo saat rekonsiliasi akhir bulan",
+      "target": "0 selisih",
+      "how_measured": "Bandingkan saldo aplikasi dengan buku kas pada akhir bulan uji coba"
+    }
+  ],
+  "stack": {
+    "frontend": "Next.js (App Router) dengan TypeScript, Tailwind CSS, dan shadcn/ui",
+    "backend": "Next.js Route Handlers dan Server Actions",
+    "database": "PostgreSQL di Supabase dengan Drizzle ORM",
+    "auth": "Supabase Auth (email dan kata sandi)",
+    "hosting": "Vercel",
+    "testing": "Vitest untuk unit test dan Playwright untuk satu alur E2E",
+    "keywords": [
+      "Next.js",
+      "TypeScript",
+      "PostgreSQL",
+      "Supabase",
+      "Tailwind CSS",
+      "Vitest"
+    ],
+    "extra": [
+      "Supabase Storage untuk bukti transaksi"
+    ],
+    "source": "recommended",
+    "custom_reason": "",
+    "custom_layers": [],
+    "ecosystems": [
+      "node"
+    ],
+    "commands": {
+      "install": "npm install",
+      "dev": "npm run dev",
+      "lint": "npm run lint",
+      "typecheck": "npm run typecheck",
+      "test": "npm test",
+      "build": "npm run build",
+      "ci_setup": ""
+    },
+    "versions": []
+  },
+  "data": {
+    "entities": [
+      {
+        "name": "User",
+        "fields": [
+          "id",
+          "email",
+          "nama",
+          "peran (bendahara/anggota)"
+        ]
+      },
+      {
+        "name": "Transaction",
+        "fields": [
+          "id",
+          "jenis (masuk/keluar)",
+          "kategori",
+          "nominal",
+          "tanggal",
+          "catatan",
+          "dibuat_oleh",
+          "bukti_url"
+        ]
+      },
+      {
+        "name": "TransactionAudit",
+        "fields": [
+          "id",
+          "transaction_id",
+          "aksi",
+          "diubah_oleh",
+          "waktu",
+          "nilai_sebelum"
+        ]
+      }
+    ],
+    "personal_data": "basic",
+    "sensitive_notes": ""
+  },
+  "security": {
+    "roles": [
+      "bendahara",
+      "anggota"
+    ],
+    "auth_method": "Email dan kata sandi lewat Supabase Auth dengan verifikasi email",
+    "secrets_handling": ".env lokal tidak di-commit; nilai produksi disimpan di pengaturan lingkungan Vercel"
+  },
+  "ai_in_app": {
+    "mode": "none",
+    "purpose": ""
+  },
+  "design": {
+    "tone": "Ramah, bersih, dan terpercaya",
+    "primary_color": "#0F766E",
+    "font": "Inter",
+    "dark_mode": true
+  },
+  "platform_specific": {
+    "web": {
+      "rendering": "fullstack-framework",
+      "i18n": false,
+      "seo": false
+    }
+  },
+  "risks": [
+    "Saldo salah hitung bila nominal dihitung di klien atau memakai bilangan desimal biner.",
+    "Paket gratis Supabase atau Vercel dapat membatasi penggunaan saat uji coba bersama."
+  ],
+  "student_reflection": {
+    "biggest_risk": "Saya khawatir saldo salah hitung kalau ada transaksi yang diedit atau dihapus, dan bendahara jadi tidak percaya aplikasinya.",
+    "why_this_project": "Kas organisasi kami masih dicatat di buku dan sering terjadi selisih yang sulit dilacak.",
+    "risk_controls": [
+      "Saldo selalu dihitung ulang di server dari seluruh transaksi, tidak disimpan sebagai angka terpisah; setiap ubah atau hapus transaksi tercatat di audit (siapa, kapan, nilai lama)."
+    ]
+  }
+}

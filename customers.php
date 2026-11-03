@@ -12,10 +12,14 @@ $currentUser = getCurrentUser();
 
 // Handle Form Submissions (Create, Edit, Delete)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isAdmin()) {
+        denyAccess('Hanya Admin Pengelola yang dapat menambah, mengubah, atau menghapus data pelanggan (403 Forbidden).');
+    }
+    validateCsrfOrDie('customers.php');
     $action = $_POST['action'] ?? '';
     
     // 1. CREATE CUSTOMER
-    if ($action === 'create' && isAdmin()) {
+    if ($action === 'create') {
         $code    = trim($_POST['customer_code'] ?? '');
         $name    = trim($_POST['name'] ?? '');
         $phone   = trim($_POST['phone'] ?? '');
@@ -58,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 2. UPDATE CUSTOMER
-    if ($action === 'edit' && isAdmin()) {
+    if ($action === 'edit') {
         $id      = (int)($_POST['id'] ?? 0);
         $code    = trim($_POST['customer_code'] ?? '');
         $name    = trim($_POST['name'] ?? '');
@@ -89,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 3. DELETE CUSTOMER
-    if ($action === 'delete' && isAdmin()) {
+    if ($action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             try {
@@ -281,6 +285,7 @@ $countTabs = $pdo->query("
 
                                         <!-- Tombol Hapus -->
                                         <form action="customers.php" method="POST" onsubmit="return confirm('Hapus pelanggan <?= e($c['name']) ?> beserta seluruh riwayatnya?')" class="inline">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                             <button type="submit" title="Hapus Pelanggan" class="w-8 h-8 rounded-xl skeuo-btn-secondary text-rose-600 hover:text-rose-700 flex items-center justify-center">
@@ -316,6 +321,7 @@ $countTabs = $pdo->query("
         </div>
 
         <form action="customers.php" method="POST" class="p-6 space-y-3.5 text-xs">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="create">
 
             <div class="grid grid-cols-2 gap-3">
@@ -402,6 +408,7 @@ $countTabs = $pdo->query("
         </div>
 
         <form action="customers.php" method="POST" class="p-6 space-y-3.5 text-xs">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <input type="hidden" id="editCustId" name="id" value="">
 

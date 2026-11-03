@@ -235,9 +235,15 @@ $unpaidAmount = (float)($summary['unpaid_amount'] ?? 0);
                                 </td>
                                 <td class="py-3.5 px-5 text-right action-col">
                                     <?php if (!$isPaid): ?>
+                                        <?php if (hasRole(['admin', 'kolektor'])): ?>
                                         <button onclick='openPaymentModal(<?= $billJson ?>)' class="px-4 py-2 rounded-xl skeuo-btn-primary text-xs font-bold shadow-md flex items-center gap-1.5 ml-auto">
                                             <i class="fa-solid fa-money-bill-wave"></i> Bayar
                                         </button>
+                                        <?php else: ?>
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-400 bg-slate-100 ml-auto" title="Hanya Admin & Kolektor">
+                                            <i class="fa-solid fa-lock text-[9px]"></i> Kasir Only
+                                        </span>
+                                        <?php endif; ?>
                                     <?php else: ?>
                                         <button onclick='loadAndShowReceipt(<?= $bill['id'] ?>)' class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5 ml-auto text-blue-700">
                                             <i class="fa-solid fa-receipt text-blue-600"></i> Struk
@@ -272,12 +278,17 @@ async function triggerGenerateBills() {
     }
 
     try {
+        const token = window.csrfToken || '';
         const response = await fetch('api/bills.php?action=generate_monthly', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': token
+            },
             body: JSON.stringify({
                 month: <?= $filterMonth ?>,
-                year: <?= $filterYear ?>
+                year: <?= $filterYear ?>,
+                csrf_token: token
             })
         });
         const res = await response.json();

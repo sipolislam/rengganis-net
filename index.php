@@ -364,12 +364,17 @@ async function triggerGenerateBills() {
     }
 
     try {
+        const token = window.csrfToken || '';
         const response = await fetch('api/bills.php?action=generate_monthly', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': token
+            },
             body: JSON.stringify({
                 month: <?= $curMonth ?>,
-                year: <?= $curYear ?>
+                year: <?= $curYear ?>,
+                csrf_token: token
             })
         });
         const res = await response.json();

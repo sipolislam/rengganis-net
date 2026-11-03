@@ -11,6 +11,7 @@ requireAdmin();
 $pdo = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validateCsrfOrDie('settings.php');
     $settingsToUpdate = [
         'company_name'     => trim($_POST['company_name'] ?? 'Rengganis Net'),
         'company_tagline'  => trim($_POST['company_tagline'] ?? ''),
@@ -46,6 +47,7 @@ require_once __DIR__ . '/includes/header.php';
     <!-- Settings Form (Neumorphic Card) -->
     <div class="neu-flat rounded-3xl p-6 sm:p-8">
         <form action="settings.php" method="POST" class="space-y-6 text-xs">
+            <?= csrfField() ?>
             
             <!-- Section 1: Profil Usaha -->
             <div class="space-y-4">

@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
 $pdo = getDB();
@@ -45,6 +46,19 @@ $stmtTeknisi->execute();
 $teknisiUser = $stmtTeknisi->fetch();
 $teknisiPassOk = $teknisiUser && password_verify('teknisi123', $teknisiUser['password']);
 assertTest("FR-01: User Teknisi terdaftar untuk akses teknisi lapangan", $teknisiPassOk);
+
+$stmtKolektor = $pdo->prepare("SELECT * FROM users WHERE username = 'kolektor'");
+$stmtKolektor->execute();
+$kolektorUser = $stmtKolektor->fetch();
+$kolektorPassOk = $kolektorUser && password_verify('kolektor123', $kolektorUser['password']) && $kolektorUser['role'] === 'kolektor';
+assertTest("FR-01: User Kolektor/Kasir terdaftar dengan password bcrypt aman & role kolektor", $kolektorPassOk);
+
+// RBAC Multi-role validation
+$_SESSION['user_id'] = 3;
+$_SESSION['user_role'] = 'kolektor';
+$rbacOk = isKolektor() && !isAdmin() && !isTeknisi() && hasRole(['admin', 'kolektor']) && !hasRole(['admin', 'teknisi']);
+assertTest("FR-01/Security: Helper RBAC multi-role memvalidasi hak akses peran Kolektor secara presisi", $rbacOk);
+unset($_SESSION['user_id'], $_SESSION['user_role']);
 
 // TEST 3: Packages Availability
 $packageCount = $pdo->query("SELECT COUNT(*) FROM packages WHERE is_active = 1")->fetchColumn();

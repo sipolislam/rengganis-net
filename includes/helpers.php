@@ -71,6 +71,35 @@ function verifyCsrfToken(?string $token): bool {
     return hash_equals($_SESSION['csrf_token'], $token);
 }
 
+function csrfField(): string {
+    return '<input type="hidden" name="csrf_token" value="' . e(generateCsrfToken()) . '">';
+}
+
+function validateCsrfOrDie(?string $redirectUrl = null): void {
+    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+    if (!verifyCsrfToken($token)) {
+        if (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'message' => 'Token CSRF tidak valid atau sesi telah kedaluwarsa.']);
+            exit;
+        }
+        setFlash('error', 'Token keamanan CSRF tidak valid atau sesi telah kedaluwarsa. Silakan coba lagi.');
+        if ($redirectUrl) {
+            header('Location: ' . $redirectUrl);
+            exit;
+        }
+        http_response_code(403);
+        if (file_exists(__DIR__ . '/403.php')) {
+            $message = 'Token keamanan CSRF tidak valid atau sesi telah kedaluwarsa. Silakan muat ulang halaman.';
+            require __DIR__ . '/403.php';
+        } else {
+            echo '403 Forbidden: Invalid CSRF Token.';
+        }
+        exit;
+    }
+}
+
 // Sanitize output
 function e(?string $string): string {
     return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');

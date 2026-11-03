@@ -48,7 +48,7 @@ $users = [
         'username' => 'kolektor',
         'password' => password_hash('kolektor123', PASSWORD_BCRYPT),
         'name'     => 'Siti Rahma (Kasir/Penagih)',
-        'role'     => 'admin',
+        'role'     => 'kolektor',
         'phone'    => '085711223344'
     ]
 ];

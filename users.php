@@ -12,6 +12,7 @@ $pdo = getDB();
 $currentUser = getCurrentUser();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validateCsrfOrDie('users.php');
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create') {
@@ -19,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = trim($_POST['password'] ?? '');
         $name     = trim($_POST['name'] ?? '');
         $role     = trim($_POST['role'] ?? 'teknisi');
+        $role     = in_array($role, ['admin', 'kolektor', 'teknisi']) ? $role : 'teknisi';
         $phone    = trim($_POST['phone'] ?? '');
 
         if ($username && $password && $name) {
@@ -30,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
                 $stmt = $pdo->prepare("INSERT INTO users (username, password, name, role, phone) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$username, $hash, $name, $role, $phone ?: null]);
-                setFlash('success', "Pengguna {$name} ({$username}) berhasil dibuat.");
+                setFlash('success', "Pengguna {$name} ({$username}) berhasil dibuat dengan peran " . ucfirst($role) . ".");
             }
         } else {
             setFlash('error', 'Semua kolom wajib diisi!');
@@ -43,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id       = (int)($_POST['id'] ?? 0);
         $name     = trim($_POST['name'] ?? '');
         $role     = trim($_POST['role'] ?? 'teknisi');
+        $role     = in_array($role, ['admin', 'kolektor', 'teknisi']) ? $role : 'teknisi';
         $phone    = trim($_POST['phone'] ?? '');
         $password = trim($_POST['password'] ?? '');
 
@@ -119,6 +122,10 @@ require_once __DIR__ . '/includes/header.php';
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm border border-amber-300">
                                         <i class="fa-solid fa-crown text-[9px]"></i> Admin Pengelola
                                     </span>
+                                <?php elseif ($u['role'] === 'kolektor'): ?>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-cyan-100 text-cyan-800 border border-cyan-300 shadow-sm">
+                                        <i class="fa-solid fa-cash-register text-[9px]"></i> Kolektor / Kasir
+                                    </span>
                                 <?php else: ?>
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
                                         <i class="fa-solid fa-wrench text-[9px]"></i> Teknisi Lapangan
@@ -138,6 +145,7 @@ require_once __DIR__ . '/includes/header.php';
                                     </button>
                                     <?php if ($u['id'] !== $currentUser['id']): ?>
                                     <form action="users.php" method="POST" onsubmit="return confirm('Hapus akun <?= e($u['name']) ?>?')" class="inline">
+                                        <?= csrfField() ?>
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="id" value="<?= $u['id'] ?>">
                                         <button type="submit" class="w-8 h-8 rounded-xl skeuo-btn-secondary text-rose-600 flex items-center justify-center" title="Hapus Akun">
@@ -163,6 +171,7 @@ require_once __DIR__ . '/includes/header.php';
             <i class="fa-solid fa-user-plus text-blue-600"></i> Tambah Pengguna Baru
         </h3>
         <form action="users.php" method="POST" class="space-y-3.5">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="create">
             <div>
                 <label class="block font-bold text-slate-700 mb-1">Nama Lengkap *</label>
@@ -183,6 +192,7 @@ require_once __DIR__ . '/includes/header.php';
                     <label class="block font-bold text-slate-700 mb-1">Role / Peran *</label>
                     <select name="role" required class="neu-input w-full p-2.5 rounded-xl font-bold">
                         <option value="teknisi">Teknisi Lapangan</option>
+                        <option value="kolektor">Kolektor / Kasir</option>
                         <option value="admin">Admin Pengelola</option>
                     </select>
                 </div>
@@ -206,6 +216,7 @@ require_once __DIR__ . '/includes/header.php';
             <i class="fa-solid fa-pen text-blue-600"></i> Edit Pengguna
         </h3>
         <form action="users.php" method="POST" class="space-y-3.5">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <input type="hidden" id="editUserId" name="id" value="">
             <div>
@@ -217,6 +228,7 @@ require_once __DIR__ . '/includes/header.php';
                     <label class="block font-bold text-slate-700 mb-1">Role / Peran *</label>
                     <select id="editUserRole" name="role" required class="neu-input w-full p-2.5 rounded-xl font-bold">
                         <option value="teknisi">Teknisi Lapangan</option>
+                        <option value="kolektor">Kolektor / Kasir</option>
                         <option value="admin">Admin Pengelola</option>
                     </select>
                 </div>

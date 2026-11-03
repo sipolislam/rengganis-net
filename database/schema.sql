@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
-    `role` ENUM('admin', 'teknisi') NOT NULL DEFAULT 'admin',
+    `role` ENUM('admin', 'teknisi', 'kolektor') NOT NULL DEFAULT 'teknisi',
     `phone` VARCHAR(20) NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
