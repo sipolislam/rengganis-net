@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-03
 
-Task `T-005` telah berhasil di-merge ke branch `main`. Task `T-006` (Pembuatan batch billing engine bulanan) telah selesai dikerjakan pada branch `feat/T-006-monthly-billing-engine`. Batch billing engine mampu menerbitkan tagihan bulanan serentak untuk seluruh pelanggan berstatus aktif, menetapkan nomor invoice resmi dengan format `INV/YYYYMM/XXXX` menggunakan sequence urut terisolasi transaksi (`FOR UPDATE`), mengaitkan tarif nominal sesuai paket layanan pelanggan, serta menentukan tanggal jatuh tempo secara dinamis berdasarkan konfigurasi sistem `billing_due_day`. Validasi parameter periode (bulan 1-12 dan tahun) ditambahkan pada endpoint API `api/bills.php`. Seluruh 20 verifikasi pada `tests/test_all_requirements.php` berhasil 100% PASS termasuk pengujian validitas atribut tagihan (T-006 / F3).
+Task `T-006` telah berhasil di-merge ke branch `main`. Task `T-007` (Pengecualian otomatis pelanggan cuti dari tagihan) telah selesai dikerjakan pada branch `feat/T-007-skip-cuti-billing`. Sistem menjamin mutlak 0 tagihan fiktif bagi seluruh pelanggan berstatus Cuti baik pada proses batch billing bulanan maupun pemanggilan fungsi penerbitan tagihan individual (Guardrail 11 & kendali risiko R1). Ditambahkan fungsi helper `isCustomerExemptFromBilling()`, pelacakan daftar kode pelanggan cuti yang dilewati (`cuti_customers`), banner notifikasi proteksi tagihan fiktif pada antarmuka `bills.php` dengan tautan langsung ke filter data cuti, serta penambahan pengujian otomatis `TEST 6.2` pada `tests/test_all_requirements.php` sehingga total pengujian kini mencapai 21/21 PASS (100%).
 
 ## Completed
 
@@ -18,16 +18,17 @@ Task `T-005` telah berhasil di-merge ke branch `main`. Task `T-006` (Pembuatan b
 | 2026-11-03 | `T-003`: Audit skema database MySQL dan foreign key | branch `chore/T-003-db-schema-audit` | 6 tabel relasional, foreign keys bertingkat, unique constraint idempotensi, dan 16 test lolos |
 | 2026-11-03 | `T-004`: Manajemen data pelanggan dan validasi kontak | branch `feat/T-004-customer-crud` | Validasi kontak WA 08xx/628xx, format IPv4, link wa.me, dan 18 test lolos |
 | 2026-11-03 | `T-005`: Pencatatan audit log status cuti pelanggan | branch `feat/T-005-status-cuti-logging` | Riwayat audit status_logs tersimpan otomatis, modal AJAX terproteksi CSRF, 19 test lolos |
+| 2026-11-03 | `T-006`: Pembuatan batch billing engine bulanan | branch `feat/T-006-monthly-billing-engine` | Penomoran resmi INV/YYYYMM/XXXX berbasis transaksi aman, due_date dinamis, 20 test lolos |
 
 ## In Progress
 
-- `T-006`: Pembuatan batch billing engine bulanan (branch `feat/T-006-monthly-billing-engine`, status `review`)
+- `T-007`: Pengecualian otomatis pelanggan cuti dari tagihan (branch `feat/T-007-skip-cuti-billing`, status `review`)
 
 ## Next Up
 
-1. `T-007`: Pengecualian otomatis pelanggan cuti dari tagihan
-2. `T-008`: Pencegahan duplikasi tagihan bulanan (idempotensi)
-3. `T-009`: Reaktivasi pelanggan cuti dengan tagihan bulan berjalan
+1. `T-008`: Pencegahan duplikasi tagihan bulanan (idempotensi)
+2. `T-009`: Reaktivasi pelanggan cuti dengan tagihan bulan berjalan
+3. `T-010`: Manajemen paket layanan internet WiFi
 
 ## Blockers
 
@@ -46,3 +47,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-03 | Antigravity AI & Saiful Islam | T-004 | Implementasi validasi nomor WhatsApp seluler Indonesia, validasi IPv4, pengecekan keunikan kode pelanggan & paket aktif, pemformatan tautan wa.me otomatis di tabel pelanggan, serta penambahan 2 pengujian verifikasi kontak dan persistensi pelanggan di test_all_requirements.php (18/18 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-005
 - 2026-11-03 | Antigravity AI & Saiful Islam | T-005 | Implementasi pencatatan otomatis riwayat audit status_logs (status lama, status baru, alasan, user, timestamp), integrasi CSRF pada modal status footer.php, pencatatan log pendaftaran cuti/isolir, dan penambahan uji otomatis verifikasi audit status di test_all_requirements.php (19/19 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-006
 - 2026-11-03 | Antigravity AI & Saiful Islam | T-006 | Penyempurnaan batch billing engine: penomoran otomatis INV/YYYYMM/XXXX berbasis transaksi aman, integrasi billing_due_day dinamis, perhitungan akhir bulan akurat, validasi parameter periode API, dan penambahan pengujian TEST 6.1 (20/20 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-007
+- 2026-11-03 | Antigravity AI & Saiful Islam | T-007 | Penegakan pengecualian mutlak pelanggan cuti dari tagihan (0 tagihan fiktif), helper isCustomerExemptFromBilling, pelacakan kode pelanggan cuti terlewat, kartu notifikasi proteksi tagihan fiktif di bills.php, dan pengujian TEST 6.2 (21/21 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-008
