@@ -37,6 +37,43 @@ function formatDate(?string $datetime, bool $withTime = false): string {
     return "$d $m $y";
 }
 
+// Contact & Phone Validation Helpers (F2 / T-004)
+function validatePhoneNumber(?string $phone): bool {
+    if (empty($phone)) {
+        return false;
+    }
+    $clean = preg_replace('/[^\d+]/', '', trim($phone));
+    return (bool)preg_match('/^(?:\+?62|0)8[1-9][0-9]{7,11}$/', $clean);
+}
+
+function formatWhatsAppNumber(?string $phone): string {
+    if (empty($phone)) {
+        return '';
+    }
+    $digits = preg_replace('/\D/', '', $phone);
+    if (str_starts_with($digits, '0')) {
+        return '62' . substr($digits, 1);
+    }
+    return $digits;
+}
+
+function formatDisplayPhone(?string $phone): string {
+    if (empty($phone)) {
+        return '-';
+    }
+    $digits = preg_replace('/\D/', '', $phone);
+    if (str_starts_with($digits, '62')) {
+        $digits = '0' . substr($digits, 2);
+    }
+    if (strlen($digits) >= 10) {
+        $part1 = substr($digits, 0, 4);
+        $part2 = substr($digits, 4, 4);
+        $part3 = substr($digits, 8);
+        return "{$part1}-{$part2}-{$part3}";
+    }
+    return $phone;
+}
+
 // Flash messages
 function setFlash(string $type, string $message): void {
     if (session_status() === PHP_SESSION_NONE) session_start();

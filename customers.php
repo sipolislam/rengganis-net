@@ -29,13 +29,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $date    = trim($_POST['installation_date'] ?? date('Y-m-d'));
         $status  = trim($_POST['status'] ?? 'aktif');
         $notes   = trim($_POST['notes'] ?? '');
-
+        $phoneValid = validatePhoneNumber($phone);
+        $ipValid = empty($ip) || (bool)filter_var($ip, FILTER_VALIDATE_IP);
         if (empty($name) || empty($phone) || empty($address) || $pkgId <= 0) {
             setFlash('error', 'Semua kolom bertanda bintang (*) wajib diisi!');
+        } elseif (!$phoneValid) {
+            setFlash('error', 'Nomor WhatsApp / HP tidak valid! Masukkan nomor seluler Indonesia yang valid (contoh: 081234567890).');
+        } elseif (!$ipValid) {
+            setFlash('error', 'Format IP Address tidak valid! Masukkan format IPv4 yang benar (contoh: 192.168.1.10).');
         } else {
+            // Validasi paket aktif
+            $chkPkg = $pdo->prepare("SELECT id FROM packages WHERE id = ? AND is_active = 1");
+            $chkPkg->execute([$pkgId]);
+            if (!$chkPkg->fetch()) {
+                setFlash('error', 'Paket layanan WiFi yang dipilih tidak valid atau sudah dinonaktifkan!');
+                header('Location: customers.php');
+                exit;
+            }
+
             if (empty($code)) {
                 $maxCode = $pdo->query("SELECT MAX(id) FROM customers")->fetchColumn();
                 $code = 'RNG-' . str_pad((string)($maxCode + 1), 3, '0', STR_PAD_LEFT);
+            } else {
+                $chkCode = $pdo->prepare("SELECT id FROM customers WHERE customer_code = ?");
+                $chkCode->execute([$code]);
+                if ($chkCode->fetch()) {
+                    setFlash('error', "Kode pelanggan '{$code}' sudah digunakan oleh pelanggan lain!");
+                    header('Location: customers.php');
+                    exit;
+                }
             }
 
             try {
@@ -72,10 +94,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ip      = trim($_POST['ip_address'] ?? '');
         $date    = trim($_POST['installation_date'] ?? date('Y-m-d'));
         $notes   = trim($_POST['notes'] ?? '');
+        $phoneValid = validatePhoneNumber($phone);
+        $ipValid = empty($ip) || (bool)filter_var($ip, FILTER_VALIDATE_IP);
 
         if ($id <= 0 || empty($name) || empty($phone) || empty($address) || $pkgId <= 0) {
             setFlash('error', 'Semua kolom bertanda bintang (*) wajib diisi!');
+        } elseif (!$phoneValid) {
+            setFlash('error', 'Nomor WhatsApp / HP tidak valid! Masukkan nomor seluler Indonesia yang valid (contoh: 081234567890).');
+        } elseif (!$ipValid) {
+            setFlash('error', 'Format IP Address tidak valid! Masukkan format IPv4 yang benar (contoh: 192.168.1.10).');
         } else {
+            // Validasi keunikan kode pelanggan
+            $chkCode = $pdo->prepare("SELECT id FROM customers WHERE customer_code = ? AND id != ?");
+            $chkCode->execute([$code, $id]);
+            if ($chkCode->fetch()) {
+                setFlash('error', "Kode pelanggan '{$code}' sudah digunakan oleh pelanggan lain!");
+                header('Location: customers.php');
+                exit;
+            }
+
+            // Validasi paket aktif
+            $chkPkg = $pdo->prepare("SELECT id FROM packages WHERE id = ? AND is_active = 1");
+            $chkPkg->execute([$pkgId]);
+            if (!$chkPkg->fetch()) {
+                setFlash('error', 'Paket layanan WiFi yang dipilih tidak valid atau sudah dinonaktifkan!');
+                header('Location: customers.php');
+                exit;
+            }
+
             try {
                 $stmt = $pdo->prepare("
                     UPDATE customers 
@@ -233,10 +279,8 @@ $countTabs = $pdo->query("
                         <?php foreach ($customers as $c): ?>
                             <?php
                             $cJson = htmlspecialchars(json_encode($c), ENT_QUOTES, 'UTF-8');
-                            $cleanPhone = preg_replace('/\D/', '', $c['phone']);
-                            if (str_starts_with($cleanPhone, '0')) {
-                                $cleanPhone = '62' . substr($cleanPhone, 1);
-                            }
+                            $waNumber = formatWhatsAppNumber($c['phone']);
+                            $dispPhone = formatDisplayPhone($c['phone']);
                             ?>
                             <tr class="hover:bg-white/60 transition-colors">
                                 <td class="py-3.5 px-5">
@@ -245,8 +289,8 @@ $countTabs = $pdo->query("
                                 </td>
                                 <td class="py-3.5 px-4 max-w-xs">
                                     <div class="flex items-center gap-1.5">
-                                        <a href="https://wa.me/<?= $cleanPhone ?>" target="_blank" class="text-emerald-600 hover:text-emerald-700 font-bold inline-flex items-center gap-1">
-                                            <i class="fa-brands fa-whatsapp text-sm"></i> <?= e($c['phone']) ?>
+                                        <a href="https://wa.me/<?= $waNumber ?>" target="_blank" class="text-emerald-600 hover:text-emerald-700 font-bold inline-flex items-center gap-1">
+                                            <i class="fa-brands fa-whatsapp text-sm"></i> <?= e($dispPhone) ?>
                                         </a>
                                     </div>
                                     <div class="text-[11px] text-slate-500 font-medium truncate" title="<?= e($c['address']) ?>"><?= e($c['address']) ?></div>
@@ -347,7 +391,8 @@ $countTabs = $pdo->query("
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">No. WhatsApp / HP *</label>
-                    <input type="text" name="phone" required placeholder="08123456789" class="neu-input w-full px-3 py-2 rounded-xl font-bold">
+                    <input type="tel" name="phone" required placeholder="081234567890" pattern="^(?:\+?62|0)8[1-9][0-9]{7,11}$" class="neu-input w-full px-3 py-2 rounded-xl font-bold">
+                    <span class="text-[10px] text-slate-400 mt-1 block">Format: 08xx / 628xx (10–13 digit)</span>
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">IP Address</label>
@@ -431,7 +476,8 @@ $countTabs = $pdo->query("
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">No. WhatsApp / HP *</label>
-                    <input type="text" id="editCustPhone" name="phone" required class="neu-input w-full px-3 py-2 rounded-xl font-bold">
+                    <input type="tel" id="editCustPhone" name="phone" required placeholder="081234567890" pattern="^(?:\+?62|0)8[1-9][0-9]{7,11}$" class="neu-input w-full px-3 py-2 rounded-xl font-bold">
+                    <span class="text-[10px] text-slate-400 mt-1 block">Format: 08xx / 628xx (10–13 digit)</span>
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">IP Address</label>
