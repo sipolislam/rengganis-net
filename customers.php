@@ -72,6 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $curMonth = (int)date('n');
                     $curYear = (int)date('Y');
                     generateCustomerBill($pdo, $newCustId, $curMonth, $curYear);
+                } else {
+                    // Record audit log for initial cuti / isolir status (T-005 / F2)
+                    $stmtInitLog = $pdo->prepare("INSERT INTO status_logs (customer_id, old_status, new_status, reason, changed_by, created_at) VALUES (?, 'aktif', ?, ?, ?, NOW())");
+                    $stmtInitLog->execute([$newCustId, $status, $notes ?: ('Pendaftaran baru status ' . ucfirst($status)), $currentUser['name']]);
                 }
 
                 setFlash('success', "Pelanggan {$name} ({$code}) berhasil didaftarkan!");

@@ -484,13 +484,18 @@
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
 
+                const token = window.csrfToken || '';
                 const response = await fetch('api/customers.php?action=update_status', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': token
+                    },
                     body: JSON.stringify({
                         customer_id: custId,
                         new_status: newStatus,
-                        reason: reason
+                        reason: reason,
+                        csrf_token: token
                     })
                 });
 
