@@ -144,6 +144,39 @@ if ($cutiCust) {
 $logCount = $pdo->query("SELECT COUNT(*) FROM status_logs")->fetchColumn();
 assertTest("FR-03/Section 11: Riwayat audit perubahan status dicatat ke tabel status_logs (total: {$logCount} log)", $logCount > 0);
 
+// TEST 5.1: Functional Status Change to 'cuti' Audit Trail (T-005 / F2 Acceptance Criteria)
+$stmtActCust = $pdo->query("SELECT id, status FROM customers WHERE status = 'aktif' LIMIT 1");
+$actCust = $stmtActCust->fetch();
+if ($actCust) {
+    $testCustId = (int)$actCust['id'];
+    $testReason = 'Uji coba permohonan cuti sementara (T-005)';
+    $testUser = 'Admin Penguji T-005';
+    
+    $statusUpdated = updateCustomerStatus($pdo, $testCustId, 'cuti', $testReason, $testUser, false);
+    
+    // Verify latest log in status_logs
+    $stmtLatestLog = $pdo->prepare("
+        SELECT * FROM status_logs 
+        WHERE customer_id = ? 
+        ORDER BY id DESC LIMIT 1
+    ");
+    $stmtLatestLog->execute([$testCustId]);
+    $latestLog = $stmtLatestLog->fetch();
+    
+    $logValid = $statusUpdated 
+        && $latestLog 
+        && $latestLog['old_status'] === 'aktif' 
+        && $latestLog['new_status'] === 'cuti' 
+        && $latestLog['reason'] === $testReason 
+        && $latestLog['changed_by'] === $testUser 
+        && !empty($latestLog['created_at']);
+        
+    assertTest("T-005/F2: Perubahan status ke 'cuti' mencatat audit log lengkap (status lama, status baru, alasan, user, waktu)", (bool)$logValid);
+    
+    // Revert status back to 'aktif'
+    updateCustomerStatus($pdo, $testCustId, 'aktif', 'Pengembalian status aktif pasca uji coba', $testUser, false);
+}
+
 // TEST 6: Monthly Billing Generation Engine (FR-04)
 $testMonth = 11; // November 2026 test
 $testYear = 2026;
