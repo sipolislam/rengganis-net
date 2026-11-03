@@ -419,14 +419,19 @@
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
 
+                const token = window.csrfToken || '';
                 const response = await fetch('api/bills.php?action=pay', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': token
+                    },
                     body: JSON.stringify({
                         bill_id: billId,
                         payment_method: method,
                         collector_name: collector,
-                        notes: notes
+                        notes: notes,
+                        csrf_token: token
                     })
                 });
 

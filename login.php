@@ -16,10 +16,13 @@ if (isLoggedIn()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    $username  = trim($_POST['username'] ?? '');
+    $password  = trim($_POST['password'] ?? '');
 
-    if (empty($username) || empty($password)) {
+    if (!verifyCsrfToken($csrfToken)) {
+        $error = 'Token keamanan CSRF tidak valid atau sesi kedaluwarsa. Silakan muat ulang halaman.';
+    } elseif (empty($username) || empty($password)) {
         $error = 'Username dan password wajib diisi!';
     } else {
         $pdo = getDB();
@@ -28,16 +31,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
+            // Regenerate session ID to prevent session fixation attacks (OWASP A07:2025)
+            session_regenerate_id(true);
+
+            $_SESSION['user_id']       = (int)$user['id'];
             $_SESSION['user_username'] = $user['username'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_role'] = $user['role'];
-            $_SESSION['user_phone'] = $user['phone'];
+            $_SESSION['user_name']     = $user['name'];
+            $_SESSION['user_role']     = $user['role'];
+            $_SESSION['user_phone']    = $user['phone'];
+
+            // Generate fresh CSRF token for the authenticated session
+            $_SESSION['csrf_token']    = bin2hex(random_bytes(32));
 
             setFlash('success', "Selamat datang kembali, {$user['name']}!");
             header('Location: index.php');
             exit;
         } else {
+            // Generic error message to prevent username enumeration
             $error = 'Username atau kata sandi yang Anda masukkan salah.';
         }
     }
@@ -81,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
                 <div>
                     <h2 class="text-base font-black text-white font-tech">Autentikasi Pengguna</h2>
-                    <p class="text-[11px] text-slate-400">Masuk dengan akun Admin atau Teknisi</p>
+                    <p class="text-[11px] text-slate-400">Masuk dengan akun Admin, Kolektor, atau Teknisi</p>
                 </div>
                 <span class="led-pulse active-green"></span>
             </div>
@@ -101,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form action="login.php" method="POST" class="space-y-4">
+                <?= csrfField() ?>
                 <div>
                     <label class="block text-[11px] font-black text-slate-300 uppercase tracking-wider mb-1.5">Username Akun</label>
                     <div class="relative">
@@ -132,11 +143,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Quick Demo Login Helpers -->
             <div class="mt-8 pt-6 border-t border-white/10 text-center">
                 <p class="text-[10px] text-slate-400 mb-2.5 font-bold uppercase tracking-wider">Akses Cepat (Demo):</p>
-                <div class="flex items-center justify-center gap-2">
-                    <button type="button" onclick="fillCreds('admin', 'admin123')" class="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-black transition-colors flex items-center gap-1.5 shadow-sm">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                    <button type="button" onclick="fillCreds('admin', 'admin123')" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-black transition-colors flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-crown text-[10px] text-amber-400"></i> Admin
                     </button>
-                    <button type="button" onclick="fillCreds('teknisi', 'teknisi123')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 text-xs font-black transition-colors flex items-center gap-1.5 shadow-sm">
+                    <button type="button" onclick="fillCreds('kolektor', 'kolektor123')" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-xs font-black transition-colors flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-cash-register text-[10px] text-cyan-400"></i> Kolektor
+                    </button>
+                    <button type="button" onclick="fillCreds('teknisi', 'teknisi123')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 text-xs font-black transition-colors flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-wrench text-[10px] text-emerald-400"></i> Teknisi
                     </button>
                 </div>

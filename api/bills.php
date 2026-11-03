@@ -26,6 +26,21 @@ $input = json_decode($rawInput, true) ?? $_POST;
 try {
     switch ($action) {
         case 'pay':
+            // Multi-role Authorization: Only Admin and Kolektor/Kasir can record payments (F5 / docs/SECURITY.md)
+            if (!hasRole(['admin', 'kolektor'])) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Teknisi tidak memiliki wewenang untuk memproses pelunasan tagihan (403 Forbidden).']);
+                exit;
+            }
+
+            // CSRF validation
+            $csrfToken = $input['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+            if (!verifyCsrfToken($csrfToken)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Token CSRF tidak valid atau sesi telah kedaluwarsa.']);
+                exit;
+            }
+
             $billId = (int)($input['bill_id'] ?? 0);
             $method = trim($input['payment_method'] ?? 'Tunai');
             $collector = trim($input['collector_name'] ?? $currentUser['name']);
@@ -138,7 +153,16 @@ try {
 
         case 'generate_monthly':
             if (!isAdmin()) {
-                throw new Exception('Hanya admin yang dapat men-generate tagihan.');
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak! Hanya Admin Pengelola yang dapat men-generate tagihan (403 Forbidden).']);
+                exit;
+            }
+
+            $csrfToken = $input['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+            if (!verifyCsrfToken($csrfToken)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Token CSRF tidak valid atau sesi telah kedaluwarsa.']);
+                exit;
             }
 
             $month = (int)($input['month'] ?? date('n'));

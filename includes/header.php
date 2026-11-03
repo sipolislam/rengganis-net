@@ -64,6 +64,12 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
 
     <!-- Luxury Neo-Skeuomorphic Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
+
+    <!-- CSRF Protection Token -->
+    <meta name="csrf-token" content="<?= e(generateCsrfToken()) ?>">
+    <script>
+        window.csrfToken = "<?= e(generateCsrfToken()) ?>";
+    </script>
 </head>
 <body class="bg-[#e9eff6] text-slate-800 antialiased overflow-hidden flex h-screen select-none">
 
@@ -105,7 +111,7 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-900 flex items-center justify-center text-white shadow-md font-bold text-sm">
                         <?= strtoupper(substr($currentUser['name'], 0, 1)) ?>
                     </div>
-                    <span class="absolute -bottom-0.5 -right-0.5 led-pulse <?= $currentUser['role'] === 'admin' ? 'active-blue' : 'active-green' ?>"></span>
+                    <span class="absolute -bottom-0.5 -right-0.5 led-pulse <?= $currentUser['role'] === 'admin' ? 'active-blue' : ($currentUser['role'] === 'kolektor' ? 'active-amber' : 'active-green') ?>"></span>
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-xs font-extrabold text-slate-800 truncate leading-tight"><?= e($currentUser['name']) ?></div>
@@ -113,6 +119,10 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
                         <?php if ($currentUser['role'] === 'admin'): ?>
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm border border-amber-300">
                                 <i class="fa-solid fa-crown text-[8px]"></i> Admin
+                            </span>
+                        <?php elseif ($currentUser['role'] === 'kolektor'): ?>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-cyan-600 text-white shadow-sm">
+                                <i class="fa-solid fa-cash-register text-[8px]"></i> Kolektor
                             </span>
                         <?php else: ?>
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white shadow-sm">

@@ -26,6 +26,13 @@ try {
     switch ($action) {
         case 'update_status':
             // Both Admin and authorized users can update customer status
+            $csrfToken = $input['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+            if (!verifyCsrfToken($csrfToken)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Token CSRF tidak valid atau sesi telah kedaluwarsa.']);
+                exit;
+            }
+
             $customerId = (int)($input['customer_id'] ?? 0);
             $newStatus = trim($input['new_status'] ?? '');
             $reason = trim($input['reason'] ?? '');

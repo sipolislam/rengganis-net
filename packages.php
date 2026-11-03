@@ -9,7 +9,11 @@ require_once __DIR__ . '/includes/header.php';
 
 $pdo = getDB();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdmin()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isAdmin()) {
+        denyAccess('Hanya Admin Pengelola yang dapat menambah, mengubah, atau menghapus paket bandwidth (403 Forbidden).');
+    }
+    validateCsrfOrDie('packages.php');
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create') {
@@ -125,6 +129,7 @@ $packages = $pdo->query("
                         </button>
                         <?php if ((int)$pkg['subscriber_count'] === 0): ?>
                         <form action="packages.php" method="POST" onsubmit="return confirm('Hapus paket ini?')" class="inline">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= $pkg['id'] ?>">
                             <button type="submit" class="w-8 h-8 rounded-xl skeuo-btn-secondary text-rose-600 flex items-center justify-center" title="Hapus Paket">
@@ -148,6 +153,7 @@ $packages = $pdo->query("
             <i class="fa-solid fa-cubes text-blue-600"></i> Tambah Paket WiFi
         </h3>
         <form action="packages.php" method="POST" class="space-y-3.5 text-xs">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="create">
             <div>
                 <label class="block font-bold text-slate-700 mb-1">Nama Paket *</label>
@@ -182,6 +188,7 @@ $packages = $pdo->query("
             <i class="fa-solid fa-pen text-blue-600"></i> Edit Paket WiFi
         </h3>
         <form action="packages.php" method="POST" class="space-y-3.5 text-xs">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <input type="hidden" id="editPkgId" name="id" value="">
             <div>

@@ -1,9 +1,15 @@
 <?php
 /**
  * Authentication and Session Management for Rengganis Net
+ * Multi-role RBAC: Admin, Kolektor, Teknisi
  */
 
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_only_cookies', '1');
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        ini_set('session.cookie_secure', '1');
+    }
     session_start();
 }
 
@@ -18,7 +24,7 @@ function getCurrentUser(): ?array {
         return null;
     }
     return [
-        'id'       => $_SESSION['user_id'],
+        'id'       => (int)$_SESSION['user_id'],
         'username' => $_SESSION['user_username'] ?? '',
         'name'     => $_SESSION['user_name'] ?? '',
         'role'     => $_SESSION['user_role'] ?? 'teknisi',
@@ -34,6 +40,38 @@ function isTeknisi(): bool {
     return isLoggedIn() && (($_SESSION['user_role'] ?? '') === 'teknisi');
 }
 
+function isKolektor(): bool {
+    return isLoggedIn() && (($_SESSION['user_role'] ?? '') === 'kolektor');
+}
+
+function hasRole(string|array $roles): bool {
+    if (!isLoggedIn()) {
+        return false;
+    }
+    $userRole = $_SESSION['user_role'] ?? '';
+    if (is_array($roles)) {
+        return in_array($userRole, $roles, true);
+    }
+    return $userRole === $roles;
+}
+
+function denyAccess(string $message = 'Akses ditolak! Anda tidak memiliki hak akses yang mencukupi untuk tindakan ini (403 Forbidden).'): void {
+    http_response_code(403);
+    $isJson = (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'))
+        || (!empty($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], '/api/'))
+        || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+    
+    if ($isJson) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => $message]);
+        exit;
+    }
+
+    $_SESSION['flash_error'] = $message;
+    require_once __DIR__ . '/403.php';
+    exit;
+}
+
 function requireLogin(): void {
     if (!isLoggedIn()) {
         $_SESSION['flash_error'] = 'Silakan login terlebih dahulu untuk mengakses sistem.';
@@ -42,11 +80,18 @@ function requireLogin(): void {
     }
 }
 
+function requireRole(string|array $roles): void {
+    requireLogin();
+    if (!hasRole($roles)) {
+        $allowed = is_array($roles) ? implode('/', $roles) : $roles;
+        denyAccess("Akses ditolak! Menu ini hanya dapat diakses oleh peran {$allowed} (403 Forbidden).");
+    }
+}
+
 function requireAdmin(): void {
     requireLogin();
     if (!isAdmin()) {
-        $_SESSION['flash_error'] = 'Akses ditolak! Anda tidak memiliki izin Admin untuk tindakan ini.';
-        header('Location: index.php');
-        exit;
+        denyAccess('Akses ditolak! Menu Pengaturan Sistem dan Manajemen User hanya dapat diakses oleh Admin Pengelola (403 Forbidden).');
     }
 }
+
