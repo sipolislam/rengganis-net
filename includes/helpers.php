@@ -175,6 +175,17 @@ function getStatusBadge(string $status): string {
 }
 
 /**
+ * Check if a customer status is exempt from monthly billing (FR-03 / R1 / Guardrail 11).
+ * Customers with status = 'cuti' are strictly exempt with 0 fictional bills.
+ *
+ * @param string $status
+ * @return bool True if customer is exempt from billing
+ */
+function isCustomerExemptFromBilling(string $status): bool {
+    return in_array(strtolower(trim($status)), ['cuti'], true);
+}
+
+/**
  * Generate monthly bills for all active customers.
  * EXCLUDES customers with status = 'cuti' or 'isolir' (as per FR-03).
  *
@@ -196,9 +207,10 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
     $dueDayPadded = str_pad((string)$dueDay, 2, '0', STR_PAD_LEFT);
     $dueDate = "{$year}-{$monthPadded}-{$dueDayPadded}";
 
-    // Count customers in 'cuti'
-    $stmtCutiCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'cuti'");
-    $skippedCuti = (int)$stmtCutiCount->fetchColumn();
+    // Query customers on leave ('cuti') for exemption tracking (FR-03 / R1)
+    $stmtCuti = $pdo->query("SELECT customer_code FROM customers WHERE status = 'cuti'");
+    $cutiCodes = $stmtCuti->fetchAll(PDO::FETCH_COLUMN);
+    $skippedCuti = count($cutiCodes);
 
     // Count customers in 'isolir'
     $stmtIsolirCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'isolir'");
@@ -208,8 +220,9 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
     $lastDayOfMonth = date('Y-m-t', strtotime("{$year}-{$monthPadded}-01"));
 
     // Select active customers who don't have a bill for this month & year
+    // Hard filter: status = 'aktif' strictly prevents any leave customer from being selected
     $stmt = $pdo->prepare("
-        SELECT c.id, c.customer_code, c.name, p.price
+        SELECT c.id, c.customer_code, c.name, c.status, p.price
         FROM customers c
         JOIN packages p ON c.package_id = p.id
         WHERE c.status = 'aktif'
@@ -232,7 +245,8 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
             'generated'      => 0,
             'skipped'        => 0,
             'skipped_cuti'   => $skippedCuti,
-            'skipped_isolir' => $skippedIsolir
+            'skipped_isolir' => $skippedIsolir,
+            'cuti_customers' => $cutiCodes
         ];
     }
 
@@ -256,6 +270,11 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
         ");
 
         foreach ($eligibleCustomers as $cust) {
+            // Defense-in-depth: Never generate bill for cuti or exempt customer (Guardrail 11)
+            if (isset($cust['status']) && isCustomerExemptFromBilling($cust['status'])) {
+                continue;
+            }
+
             $seq++;
             $billNum = $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
             $insertStmt->execute([
@@ -278,7 +297,8 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
         'generated'      => $generatedCount,
         'skipped'        => 0,
         'skipped_cuti'   => $skippedCuti,
-        'skipped_isolir' => $skippedIsolir
+        'skipped_isolir' => $skippedIsolir,
+        'cuti_customers' => $cutiCodes
     ];
 }
 
@@ -310,8 +330,8 @@ function generateCustomerBill(PDO $pdo, int $customerId, int $month, int $year, 
     $cust = $stmtCust->fetch();
     if (!$cust) return null;
 
-    // Hard Limit Guardrail: Never generate bill for a customer on leave ('cuti')
-    if ($cust['status'] === 'cuti') {
+    // Hard Limit Guardrail 11 / FR-03 / R1: Never generate bill for a customer on leave ('cuti')
+    if (isCustomerExemptFromBilling($cust['status'])) {
         return null;
     }
 

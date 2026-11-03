@@ -62,6 +62,10 @@ $summary = $stmtSummary->fetch();
 $totalAmount = (float)($summary['total_amount'] ?? 0);
 $paidAmount = (float)($summary['paid_amount'] ?? 0);
 $unpaidAmount = (float)($summary['unpaid_amount'] ?? 0);
+
+// Count leave customers for FR-03/R1 exemption visibility
+$stmtCutiCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'cuti'");
+$cutiCount = (int)$stmtCutiCount->fetchColumn();
 ?>
 
 <div class="space-y-6">
@@ -120,6 +124,29 @@ $unpaidAmount = (float)($summary['unpaid_amount'] ?? 0);
             </div>
         </div>
 
+    </div>
+
+    <!-- Cuti Exemption Notice Card (FR-03 / R1) -->
+    <div class="neu-flat rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-amber-200/50 bg-gradient-to-r from-amber-50/60 via-amber-50/30 to-slate-50/50">
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl neu-inset flex items-center justify-center text-amber-600 shadow-inner shrink-0">
+                <i class="fa-solid fa-umbrella-beach text-lg"></i>
+            </div>
+            <div>
+                <div class="text-xs font-black text-slate-800 tracking-tight flex items-center gap-2">
+                    <span>Pengecualian Pelanggan Cuti Otomatis (FR-03 / R1)</span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <i class="fa-solid fa-shield-halved text-[8px]"></i> Bebas Tagihan Fiktif
+                    </span>
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">
+                    Sistem mendeteksi <strong class="text-amber-700 font-bold"><?= $cutiCount ?> pelanggan berstatus Cuti</strong> yang secara otomatis dikecualikan dari penerbitan invoice bulanan (0 tagihan fiktif terbit).
+                </div>
+            </div>
+        </div>
+        <a href="customers.php?status=cuti" class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold text-slate-700 whitespace-nowrap shadow-sm hover:text-blue-700 transition-colors flex items-center gap-1.5 self-end sm:self-auto">
+            <span>Lihat Data Cuti</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </a>
     </div>
 
     <!-- Filter Controls (Neumorphic Inset Bar) -->

@@ -215,6 +215,34 @@ foreach ($sampleBills as $sb) {
 }
 assertTest("T-006/F3: Seluruh tagihan baru berstatus 'belum_lunas', nomor resmi INV/YYYYMM/XXXX, dan nominal sesuai paket", $allBillsValid);
 
+// TEST 6.2: Complete Exemption of Leave Customers from Billing (T-007 / F3 / R1 / Guardrail 11)
+$stmtCutiBills = $pdo->prepare("
+    SELECT COUNT(*) 
+    FROM bills b 
+    JOIN customers c ON b.customer_id = c.id 
+    WHERE c.status = 'cuti' AND b.period_month = ? AND b.period_year = ?
+");
+$stmtCutiBills->execute([$testMonth, $testYear]);
+$cutiBatchBillsCount = (int)$stmtCutiBills->fetchColumn();
+
+// Verify Guardrail 11: Attempting to generate a single bill for a cuti customer must return null
+$stmtFirstCuti = $pdo->query("SELECT id FROM customers WHERE status = 'cuti' LIMIT 1");
+$firstCutiId = (int)$stmtFirstCuti->fetchColumn();
+$attemptCutiBill = $firstCutiId > 0 ? generateCustomerBill($pdo, $firstCutiId, $testMonth, $testYear) : null;
+
+// Verify helper function
+$helperExemptCuti = isCustomerExemptFromBilling('cuti') && isCustomerExemptFromBilling('CUTI');
+$helperNotExemptAktif = !isCustomerExemptFromBilling('aktif');
+
+$t007Passed = ($cutiBatchBillsCount === 0) 
+    && ($attemptCutiBill === null) 
+    && $helperExemptCuti 
+    && $helperNotExemptAktif 
+    && isset($genResult['cuti_customers']) 
+    && count($genResult['cuti_customers']) >= 2;
+
+assertTest("T-007/F3/R1: Pengecualian mutlak pelanggan cuti saat batch billing (0 tagihan fiktif terbit & proteksi Guardrail 11)", $t007Passed);
+
 // TEST 7: Payment Processing (FR-05)
 // Pick one unpaid bill from the test batch
 $stmtUnpaid = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' LIMIT 1");
