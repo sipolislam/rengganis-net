@@ -97,6 +97,34 @@ unset($_SESSION['user_id'], $_SESSION['user_role']);
 $packageCount = $pdo->query("SELECT COUNT(*) FROM packages WHERE is_active = 1")->fetchColumn();
 assertTest("FR-02: Paket layanan WiFi tersedia (total: {$packageCount})", $packageCount >= 4);
 
+// TEST 3.1: Customer Contact Validation (T-004 / F2)
+$validPhoneCheck = validatePhoneNumber('081234567890') && validatePhoneNumber('0812-3456-7890') && validatePhoneNumber('+628123456789');
+$invalidPhoneCheck = !validatePhoneNumber('02112345678') && !validatePhoneNumber('12345') && !validatePhoneNumber('');
+$waFormatOk = (formatWhatsAppNumber('081234567890') === '6281234567890') && (formatWhatsAppNumber('+62812-3456-7890') === '6281234567890');
+assertTest("T-004/F2: Validasi nomor kontak WhatsApp Indonesia & fungsi formatting wa.me berfungsi akurat", $validPhoneCheck && $invalidPhoneCheck && $waFormatOk);
+
+// TEST 3.2: Customer Record Persistence & Package Linking (T-004 / F2)
+$testCustCode = 'RNG-TEST-' . time();
+$pkgFirstId = (int)$pdo->query("SELECT id FROM packages WHERE is_active = 1 LIMIT 1")->fetchColumn();
+$stmtInsertTest = $pdo->prepare("
+    INSERT INTO customers (customer_code, name, phone, address, package_id, ip_address, installation_date, status, notes)
+    VALUES (?, 'Pelanggan Uji Coba T-004', '081234567899', 'Jl. Uji Coba No. 99', ?, '192.168.10.99', CURDATE(), 'aktif', 'Uji CRUD T-004')
+");
+$stmtInsertTest->execute([$testCustCode, $pkgFirstId]);
+$testCustId = (int)$pdo->lastInsertId();
+
+$stmtCheckTest = $pdo->prepare("SELECT * FROM customers WHERE id = ?");
+$stmtCheckTest->execute([$testCustId]);
+$insertedCust = $stmtCheckTest->fetch();
+
+$custPersisted = $insertedCust && $insertedCust['customer_code'] === $testCustCode && $insertedCust['package_id'] == $pkgFirstId;
+assertTest("T-004/F2: Penyimpanan data master pelanggan baru terhubung ke paket layanan WiFi", (bool)$custPersisted);
+
+// Clean up test customer
+if ($testCustId > 0) {
+    $pdo->prepare("DELETE FROM customers WHERE id = ?")->execute([$testCustId]);
+}
+
 // TEST 4: Customer Status Management & Exemption from Bills (FR-03 & Acceptance Criteria)
 // Find or create customer with status 'cuti'
 $stmtCuti = $pdo->prepare("SELECT * FROM customers WHERE status = 'cuti'");
