@@ -176,9 +176,20 @@ try {
 
             $res = generateMonthlyBills($pdo, $month, $year, $dueDay);
 
+            $periodLabel = getMonthName($month) . " {$year}";
+            if ($res['generated'] === 0) {
+                $message = "Seluruh tagihan periode {$periodLabel} sudah terbit sebelumnya ({$res['skipped']} tagihan aktif sudah ada / Idempoten). 0 tagihan ganda dibuat.";
+                if ($res['skipped_cuti'] > 0) {
+                    $message .= " ({$res['skipped_cuti']} pelanggan Cuti tetap dilewati).";
+                }
+            } else {
+                $cutiInfo = $res['skipped_cuti'] > 0 ? " ({$res['skipped_cuti']} pelanggan berstatus Cuti dilewati tanpa denda fiktif)." : "";
+                $message = "Berhasil men-generate {$res['generated']} tagihan baru untuk periode {$periodLabel}.{$cutiInfo}";
+            }
+
             echo json_encode([
                 'success' => true,
-                'message' => "Berhasil men-generate {$res['generated']} tagihan baru untuk periode " . getMonthName($month) . " {$year}. ({$res['skipped_cuti']} pelanggan berstatus Cuti dilewati tanpa denda).",
+                'message' => $message,
                 'data'    => $res
             ]);
             break;

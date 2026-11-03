@@ -240,10 +240,20 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
     ]);
     $eligibleCustomers = $stmt->fetchAll();
 
+    // Calculate active customers already billed for this month & year (idempotency tracking / R1)
+    $stmtAlreadyBilled = $pdo->prepare("
+        SELECT COUNT(DISTINCT b.customer_id) 
+        FROM bills b 
+        JOIN customers c ON b.customer_id = c.id 
+        WHERE b.period_month = :m AND b.period_year = :y AND c.status = 'aktif'
+    ");
+    $stmtAlreadyBilled->execute([':m' => $month, ':y' => $year]);
+    $skippedAlreadyBilled = (int)$stmtAlreadyBilled->fetchColumn();
+
     if (empty($eligibleCustomers)) {
         return [
             'generated'      => 0,
-            'skipped'        => 0,
+            'skipped'        => $skippedAlreadyBilled,
             'skipped_cuti'   => $skippedCuti,
             'skipped_isolir' => $skippedIsolir,
             'cuti_customers' => $cutiCodes
@@ -277,15 +287,24 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
 
             $seq++;
             $billNum = $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
-            $insertStmt->execute([
-                $billNum,
-                $cust['id'],
-                $month,
-                $year,
-                $cust['price'],
-                $dueDate
-            ]);
-            $generatedCount++;
+            try {
+                $insertStmt->execute([
+                    $billNum,
+                    $cust['id'],
+                    $month,
+                    $year,
+                    $cust['price'],
+                    $dueDate
+                ]);
+                $generatedCount++;
+            } catch (PDOException $e) {
+                // Database unique_customer_period duplicate trap: skip gracefully without duplicate
+                if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? 0) == 1062) {
+                    $skippedAlreadyBilled++;
+                    continue;
+                }
+                throw $e;
+            }
         }
         $pdo->commit();
     } catch (Exception $e) {
@@ -295,7 +314,7 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
 
     return [
         'generated'      => $generatedCount,
-        'skipped'        => 0,
+        'skipped'        => $skippedAlreadyBilled,
         'skipped_cuti'   => $skippedCuti,
         'skipped_isolir' => $skippedIsolir,
         'cuti_customers' => $cutiCodes
@@ -347,25 +366,33 @@ function generateCustomerBill(PDO $pdo, int $customerId, int $month, int $year, 
     $seq++;
     $billNum = $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
 
-    $insertStmt = $pdo->prepare("
-        INSERT INTO bills (bill_number, customer_id, period_month, period_year, amount, due_date, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, 'belum_lunas', NOW())
-    ");
-    $insertStmt->execute([
-        $billNum,
-        $customerId,
-        $month,
-        $year,
-        $cust['price'],
-        $dueDate
-    ]);
-    $newId = (int)$pdo->lastInsertId();
+    try {
+        $insertStmt = $pdo->prepare("
+            INSERT INTO bills (bill_number, customer_id, period_month, period_year, amount, due_date, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'belum_lunas', NOW())
+        ");
+        $insertStmt->execute([
+            $billNum,
+            $customerId,
+            $month,
+            $year,
+            $cust['price'],
+            $dueDate
+        ]);
+        $newId = (int)$pdo->lastInsertId();
 
-    return [
-        'id'          => $newId,
-        'bill_number' => $billNum,
-        'amount'      => $cust['price']
-    ];
+        return [
+            'id'          => $newId,
+            'bill_number' => $billNum,
+            'amount'      => $cust['price']
+        ];
+    } catch (PDOException $e) {
+        // Trap duplicate constraint violation (idempotent: return null without inserting duplicate)
+        if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? 0) == 1062) {
+            return null;
+        }
+        throw $e;
+    }
 }
 
 /**

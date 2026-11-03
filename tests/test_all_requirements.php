@@ -243,6 +243,30 @@ $t007Passed = ($cutiBatchBillsCount === 0)
 
 assertTest("T-007/F3/R1: Pengecualian mutlak pelanggan cuti saat batch billing (0 tagihan fiktif terbit & proteksi Guardrail 11)", $t007Passed);
 
+// TEST 6.3: Billing Idempotency & Database Unique Constraint Enforcement (T-008 / F3 / R1)
+// 1. Idempotency return verification: generated is 0, skipped reflects all existing active bills
+$idempotentEngineOk = ($genResultAgain['generated'] === 0) && ($genResultAgain['skipped'] >= 9);
+
+// 2. Database-level unique constraint enforcement test:
+// Attempting a direct raw SQL duplicate insert for the same (customer_id, period_month, period_year) must fail with SQLSTATE 23000
+$dbDuplicateBlocked = false;
+try {
+    $stmtDirectDup = $pdo->prepare("
+        INSERT INTO bills (bill_number, customer_id, period_month, period_year, amount, due_date, status, created_at)
+        VALUES ('INV/TEST/DUP', ?, ?, ?, 100000, '2026-11-10', 'belum_lunas', NOW())
+    ");
+    $stmtDirectDup->execute([$sampleBills[0]['customer_id'], $testMonth, $testYear]);
+} catch (PDOException $e) {
+    if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? 0) == 1062) {
+        $dbDuplicateBlocked = true;
+    }
+}
+
+// 3. Single customer bill idempotency: calling generateCustomerBill for already-billed customer must return null
+$singleBillIdempotent = (generateCustomerBill($pdo, (int)$sampleBills[0]['customer_id'], $testMonth, $testYear) === null);
+
+assertTest("T-008/F3/R1: Validasi idempotensi engine (0 tagihan baru) & proteksi database unique_customer_period (SQLSTATE 23000)", $idempotentEngineOk && $dbDuplicateBlocked && $singleBillIdempotent);
+
 // TEST 7: Payment Processing (FR-05)
 // Pick one unpaid bill from the test batch
 $stmtUnpaid = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' LIMIT 1");
