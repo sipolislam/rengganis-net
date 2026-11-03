@@ -191,6 +191,30 @@ assertTest("FR-03/Acceptance Criteria: Batch billing engine otomatis melewatkan 
 $genResultAgain = generateMonthlyBills($pdo, $testMonth, $testYear, 10);
 assertTest("Guardrail Metric: Tidak ada tagihan duplikat (generate ulang menghasilkan 0 tagihan baru)", $genResultAgain['generated'] === 0);
 
+// TEST 6.1: Generated Bill Attributes & Format Verification (T-006 / F3)
+$stmtSampleBills = $pdo->prepare("
+    SELECT b.*, p.price as expected_price 
+    FROM bills b 
+    JOIN customers c ON b.customer_id = c.id 
+    JOIN packages p ON c.package_id = p.id 
+    WHERE b.period_month = ? AND b.period_year = ?
+");
+$stmtSampleBills->execute([$testMonth, $testYear]);
+$sampleBills = $stmtSampleBills->fetchAll();
+
+$allBillsValid = count($sampleBills) > 0;
+foreach ($sampleBills as $sb) {
+    $numPatternOk = (bool)preg_match('/^INV\/\d{6}\/\d{4}$/', $sb['bill_number']);
+    $statusOk = ($sb['status'] === 'belum_lunas');
+    $amountOk = ((float)$sb['amount'] === (float)$sb['expected_price']);
+    $dueDateOk = !empty($sb['due_date']);
+    if (!$numPatternOk || !$statusOk || !$amountOk || !$dueDateOk) {
+        $allBillsValid = false;
+        break;
+    }
+}
+assertTest("T-006/F3: Seluruh tagihan baru berstatus 'belum_lunas', nomor resmi INV/YYYYMM/XXXX, dan nominal sesuai paket", $allBillsValid);
+
 // TEST 7: Payment Processing (FR-05)
 // Pick one unpaid bill from the test batch
 $stmtUnpaid = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' LIMIT 1");

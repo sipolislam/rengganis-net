@@ -167,6 +167,11 @@ try {
 
             $month = (int)($input['month'] ?? date('n'));
             $year = (int)($input['year'] ?? date('Y'));
+            if ($month < 1 || $month > 12 || $year < 2020 || $year > 2100) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Parameter periode bulan (1-12) atau tahun tidak valid.']);
+                exit;
+            }
             $dueDay = (int)getSetting($pdo, 'billing_due_day', '10');
 
             $res = generateMonthlyBills($pdo, $month, $year, $dueDay);
