@@ -34,6 +34,39 @@ $expectedTables = ['users', 'packages', 'customers', 'bills', 'status_logs', 'se
 $hasAllTables = count(array_intersect($expectedTables, $tables)) === count($expectedTables);
 assertTest("FR-01/NFR-01: Semua 6 tabel MySQL ada dan siap digunakan", $hasAllTables);
 
+// TEST 1.1: Foreign Keys Integrity (T-003)
+$fks = $pdo->query("
+    SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+    WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL
+")->fetchAll();
+
+$hasBillsCustFk  = false;
+$hasCustPkgFk    = false;
+$hasStatusCustFk = false;
+
+foreach ($fks as $fk) {
+    if ($fk['TABLE_NAME'] === 'bills' && $fk['COLUMN_NAME'] === 'customer_id' && $fk['REFERENCED_TABLE_NAME'] === 'customers') {
+        $hasBillsCustFk = true;
+    }
+    if ($fk['TABLE_NAME'] === 'customers' && $fk['COLUMN_NAME'] === 'package_id' && $fk['REFERENCED_TABLE_NAME'] === 'packages') {
+        $hasCustPkgFk = true;
+    }
+    if ($fk['TABLE_NAME'] === 'status_logs' && $fk['COLUMN_NAME'] === 'customer_id' && $fk['REFERENCED_TABLE_NAME'] === 'customers') {
+        $hasStatusCustFk = true;
+    }
+}
+assertTest("T-003/Schema: Foreign key relasional antar tabel terkonfigurasi konsisten (bills, customers, packages, status_logs)", $hasBillsCustFk && $hasCustPkgFk && $hasStatusCustFk);
+
+// TEST 1.2: Unique Constraint Idempotensi Tagihan (T-003 / R1)
+$uniquePeriod = false;
+$billIndices = $pdo->query("SHOW INDEX FROM bills WHERE Key_name = 'unique_customer_period'")->fetchAll();
+if (count($billIndices) === 3) {
+    $cols = array_column($billIndices, 'Column_name');
+    $uniquePeriod = in_array('customer_id', $cols) && in_array('period_month', $cols) && in_array('period_year', $cols);
+}
+assertTest("T-003/R1: Unique constraint (customer_id, period_month, period_year) aktif mencegah tagihan duplikat", $uniquePeriod);
+
 // TEST 2: Users & Password Hashing (bcrypt NFR-03 & FR-01)
 $stmtAdmin = $pdo->prepare("SELECT * FROM users WHERE username = 'admin'");
 $stmtAdmin->execute();

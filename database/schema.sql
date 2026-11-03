@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS `customers` (
     `notes` TEXT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_customers_package` FOREIGN KEY (`package_id`) REFERENCES `packages` (`id`) ON UPDATE CASCADE
+    CONSTRAINT `fk_customers_package` FOREIGN KEY (`package_id`) REFERENCES `packages` (`id`) ON UPDATE CASCADE,
+    KEY `idx_customers_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table: bills
@@ -62,7 +63,9 @@ CREATE TABLE IF NOT EXISTS `bills` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_bills_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT `unique_customer_period` UNIQUE (`customer_id`, `period_month`, `period_year`)
+    CONSTRAINT `unique_customer_period` UNIQUE (`customer_id`, `period_month`, `period_year`),
+    KEY `idx_bills_period` (`period_year`, `period_month`),
+    KEY `idx_bills_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table: status_logs

@@ -150,7 +150,7 @@ Database `rengganis_net` terdiri dari 6 tabel relasional MySQL:
 | `address` | TEXT | Alamat pemasangan (data lokasi) |
 | `package_id` | INT (FK -> packages.id) | Paket internet yang digunakan |
 | `ip_address` | VARCHAR(45) | Alokasi IP Address statis / PPPoE |
-| `installed_date` | DATE | Tanggal awal pemasangan WiFi |
+| `installation_date` | DATE | Tanggal awal pemasangan WiFi |
 | `status` | ENUM('aktif','cuti','isolir') | Status langganan saat ini |
 | `notes` | TEXT | Catatan teknis lapangan |
 
@@ -158,7 +158,7 @@ Database `rengganis_net` terdiri dari 6 tabel relasional MySQL:
 | Field | Tipe | Keterangan |
 |---|---|---|
 | `id` | INT AUTO_INCREMENT (PK) | Pengenal unik tagihan |
-| `bill_no` | VARCHAR(30) UNIQUE | Nomor tagihan resmi (misal: INV/202610/0001) |
+| `bill_number` | VARCHAR(50) UNIQUE | Nomor tagihan resmi (misal: INV/202610/0001) |
 | `customer_id` | INT (FK -> customers.id) | Relasi ke pelanggan |
 | `period_month` | TINYINT | Bulan periode penagihan (1–12) |
 | `period_year` | SMALLINT | Tahun periode penagihan (misal: 2026) |
@@ -178,7 +178,7 @@ Database `rengganis_net` terdiri dari 6 tabel relasional MySQL:
 | `customer_id` | INT (FK -> customers.id) | Relasi ke pelanggan |
 | `old_status` | VARCHAR(20) | Status sebelum perubahan |
 | `new_status` | VARCHAR(20) | Status setelah perubahan |
-| `notes` | TEXT | Alasan perubahan (misal: cuti kerja ke luar kota) |
+| `reason` | TEXT | Alasan perubahan status (misal: cuti kerja ke luar kota) |
 | `changed_by` | VARCHAR(50) | Username staf yang melakukan perubahan |
 | `created_at` | DATETIME | Waktu pencatatan perubahan status |
 
