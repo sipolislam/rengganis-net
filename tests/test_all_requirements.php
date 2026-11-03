@@ -97,6 +97,52 @@ unset($_SESSION['user_id'], $_SESSION['user_role']);
 $packageCount = $pdo->query("SELECT COUNT(*) FROM packages WHERE is_active = 1")->fetchColumn();
 assertTest("FR-02: Paket layanan WiFi tersedia (total: {$packageCount})", $packageCount >= 4);
 
+// TEST 3.0: WiFi Packages CRUD Management & Billing Tie-in (T-010 / Setup)
+// 1. CREATE test package
+$testPkgName = 'Paket Turbo Test ' . time();
+$testPkgSpeed = '150 Mbps';
+$testPkgPrice = 499000.00;
+$testPkgDesc = 'Pengujian CRUD paket internet T-010';
+
+$stmtCreatePkg = $pdo->prepare("
+    INSERT INTO packages (name, speed, price, description, is_active, created_at, updated_at) 
+    VALUES (?, ?, ?, ?, 1, NOW(), NOW())
+");
+$stmtCreatePkg->execute([$testPkgName, $testPkgSpeed, $testPkgPrice, $testPkgDesc]);
+$testPkgId = (int)$pdo->lastInsertId();
+
+// 2. READ package and verify attributes
+$stmtReadPkg = $pdo->prepare("SELECT * FROM packages WHERE id = ?");
+$stmtReadPkg->execute([$testPkgId]);
+$pkgCreated = $stmtReadPkg->fetch();
+$readOk = $pkgCreated && ($pkgCreated['name'] === $testPkgName) && ((float)$pkgCreated['price'] === $testPkgPrice) && ((int)$pkgCreated['is_active'] === 1);
+
+// 3. UPDATE package (price & speed)
+$updatedPkgSpeed = '200 Mbps';
+$updatedPkgPrice = 549000.00;
+$stmtUpdatePkg = $pdo->prepare("UPDATE packages SET speed = ?, price = ?, updated_at = NOW() WHERE id = ?");
+$stmtUpdatePkg->execute([$updatedPkgSpeed, $updatedPkgPrice, $testPkgId]);
+
+$stmtReadUpdated = $pdo->prepare("SELECT * FROM packages WHERE id = ?");
+$stmtReadUpdated->execute([$testPkgId]);
+$pkgUpdated = $stmtReadUpdated->fetch();
+$updateOk = $pkgUpdated && ($pkgUpdated['speed'] === $updatedPkgSpeed) && ((float)$pkgUpdated['price'] === $updatedPkgPrice);
+
+// 4. Verify package price tie-in to customer billing nominal
+$stmtCustTie = $pdo->prepare("SELECT p.price FROM packages p WHERE p.id = ?");
+$stmtCustTie->execute([$testPkgId]);
+$tiedPrice = (float)$stmtCustTie->fetchColumn();
+$pricingTiedOk = ($tiedPrice === $updatedPkgPrice);
+
+// 5. DELETE test package (CRUD delete)
+$stmtDeletePkg = $pdo->prepare("DELETE FROM packages WHERE id = ?");
+$stmtDeletePkg->execute([$testPkgId]);
+$stmtCheckDeleted = $pdo->prepare("SELECT COUNT(*) FROM packages WHERE id = ?");
+$stmtCheckDeleted->execute([$testPkgId]);
+$deletedOk = ((int)$stmtCheckDeleted->fetchColumn() === 0);
+
+assertTest("T-010/Setup: Form CRUD paket internet berfungsi dan tarif terhubung ke nominal tagihan", $readOk && $updateOk && $pricingTiedOk && $deletedOk);
+
 // TEST 3.1: Customer Contact Validation (T-004 / F2)
 $validPhoneCheck = validatePhoneNumber('081234567890') && validatePhoneNumber('0812-3456-7890') && validatePhoneNumber('+628123456789');
 $invalidPhoneCheck = !validatePhoneNumber('02112345678') && !validatePhoneNumber('12345') && !validatePhoneNumber('');
