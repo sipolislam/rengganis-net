@@ -24,8 +24,8 @@ Agen AI hanya boleh mengambil task dengan status `todo` yang seluruh dependensin
 | ID | Judul | Fitur | Ukuran | Status | Branch | Bergantung pada | Kriteria Selesai |
 |---|---|---|---|---|---|---|---|
 | T-001 | Audit repositori dan penyesuaian perintah | Setup | M | done | chore/T-001-repo-audit | - | Seluruh perintah stack.commands (lint, test) lulus tanpa galat dan tidak ada rahasia di Git |
-| T-002 | Penguatan autentikasi dan otorisasi multi-role | F1 | M | review | feat/T-002-auth-roles | T-001 | Login aman dengan bcrypt, proteksi CSRF, dan penolakan akses menu admin untuk teknisi/kolektor |
-| T-003 | Audit skema database MySQL dan foreign key | Setup | S | todo | chore/T-003-db-schema-audit | T-001 | 6 tabel MySQL terkonfigurasi dengan foreign key dan unique constraint yang konsisten |
+| T-002 | Penguatan autentikasi dan otorisasi multi-role | F1 | M | done | feat/T-002-auth-roles | T-001 | Login aman dengan bcrypt, proteksi CSRF, dan penolakan akses menu admin untuk teknisi/kolektor |
+| T-003 | Audit skema database MySQL dan foreign key | Setup | S | review | chore/T-003-db-schema-audit | T-001 | 6 tabel MySQL terkonfigurasi dengan foreign key dan unique constraint yang konsisten |
 | T-004 | Manajemen data pelanggan dan validasi kontak | F2 | M | todo | feat/T-004-customer-crud | T-003 | Form tambah/ubah pelanggan tersimpan di database dan validasi nomor WhatsApp berfungsi |
 | T-005 | Pencatatan audit log status cuti pelanggan | F2 | M | todo | feat/T-005-status-cuti-logging | T-004 | Perubahan status pelanggan ke cuti/isolir tercatat otomatis ke tabel status_logs |
 | T-006 | Pembuatan batch billing engine bulanan | F3 | L | todo | feat/T-006-monthly-billing-engine | T-004 | Batch billing menerbitkan tagihan baru untuk seluruh pelanggan berstatus aktif |
