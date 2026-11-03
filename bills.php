@@ -66,6 +66,19 @@ $unpaidAmount = (float)($summary['unpaid_amount'] ?? 0);
 // Count leave customers for FR-03/R1 exemption visibility
 $stmtCutiCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'cuti'");
 $cutiCount = (int)$stmtCutiCount->fetchColumn();
+
+// Idempotency Tracking: Compare active customers with already generated bills
+$stmtActiveCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'aktif'");
+$activeCustomerCount = (int)$stmtActiveCount->fetchColumn();
+
+$stmtBilledActive = $pdo->prepare("
+    SELECT COUNT(DISTINCT b.customer_id) FROM bills b 
+    JOIN customers c ON b.customer_id = c.id 
+    WHERE b.period_month = ? AND b.period_year = ? AND c.status = 'aktif'
+");
+$stmtBilledActive->execute([$filterMonth, $filterYear]);
+$billedActiveCount = (int)$stmtBilledActive->fetchColumn();
+$isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCustomerCount);
 ?>
 
 <div class="space-y-6">
@@ -78,8 +91,9 @@ $cutiCount = (int)$stmtCutiCount->fetchColumn();
         </div>
 
         <?php if (isAdmin()): ?>
-        <button onclick="triggerGenerateBills()" class="px-5 py-2.5 rounded-2xl skeuo-btn-emerald text-xs font-black shadow-lg flex items-center justify-center gap-2">
-            <i class="fa-solid fa-bolt text-amber-300"></i> Generate Tagihan <?= getMonthName($filterMonth) ?> <?= $filterYear ?>
+        <button onclick="triggerGenerateBills()" class="px-5 py-2.5 rounded-2xl <?= $isFullyGenerated ? 'skeuo-btn-secondary text-slate-700' : 'skeuo-btn-emerald' ?> text-xs font-black shadow-lg flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid <?= $isFullyGenerated ? 'fa-circle-check text-emerald-500' : 'fa-bolt text-amber-300' ?>"></i> 
+            <?= $isFullyGenerated ? 'Tagihan ' . getMonthName($filterMonth) . ' ' . $filterYear . ' Terbit' : 'Generate Tagihan ' . getMonthName($filterMonth) . ' ' . $filterYear ?>
         </button>
         <?php endif; ?>
     </div>
@@ -126,26 +140,29 @@ $cutiCount = (int)$stmtCutiCount->fetchColumn();
 
     </div>
 
-    <!-- Cuti Exemption Notice Card (FR-03 / R1) -->
+    <!-- Cuti Exemption & Idempotency Notice Card (FR-03 / R1) -->
     <div class="neu-flat rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-amber-200/50 bg-gradient-to-r from-amber-50/60 via-amber-50/30 to-slate-50/50">
         <div class="flex items-center gap-3.5">
             <div class="w-11 h-11 rounded-2xl neu-inset flex items-center justify-center text-amber-600 shadow-inner shrink-0">
-                <i class="fa-solid fa-umbrella-beach text-lg"></i>
+                <i class="fa-solid fa-shield-halved text-lg"></i>
             </div>
             <div>
-                <div class="text-xs font-black text-slate-800 tracking-tight flex items-center gap-2">
-                    <span>Pengecualian Pelanggan Cuti Otomatis (FR-03 / R1)</span>
+                <div class="text-xs font-black text-slate-800 tracking-tight flex flex-wrap items-center gap-2">
+                    <span>Proteksi Tagihan Fiktif & Idempotensi (FR-03 / R1)</span>
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
-                        <i class="fa-solid fa-shield-halved text-[8px]"></i> Bebas Tagihan Fiktif
+                        <i class="fa-solid fa-check text-[8px]"></i> Bebas Tagihan Cuti
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-blue-100 text-blue-800 border border-blue-200">
+                        <i class="fa-solid fa-clone text-[8px]"></i> Idempoten (0 Dobel)
                     </span>
                 </div>
                 <div class="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">
-                    Sistem mendeteksi <strong class="text-amber-700 font-bold"><?= $cutiCount ?> pelanggan berstatus Cuti</strong> yang secara otomatis dikecualikan dari penerbitan invoice bulanan (0 tagihan fiktif terbit).
+                    Sistem mendeteksi <strong class="text-amber-700 font-bold"><?= $cutiCount ?> pelanggan Cuti</strong> otomatis dilewati tanpa tagihan, dan <strong class="text-blue-700 font-bold"><?= $billedActiveCount ?> dari <?= $activeCustomerCount ?> pelanggan aktif</strong> telah memiliki invoice resmi periode ini tanpa risiko tagihan ganda.
                 </div>
             </div>
         </div>
         <a href="customers.php?status=cuti" class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold text-slate-700 whitespace-nowrap shadow-sm hover:text-blue-700 transition-colors flex items-center gap-1.5 self-end sm:self-auto">
-            <span>Lihat Data Cuti</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            <span>Data Cuti</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
         </a>
     </div>
 
@@ -300,7 +317,12 @@ async function loadAndShowReceipt(billId) {
 }
 
 async function triggerGenerateBills() {
-    if (!confirm('Apakah Anda yakin ingin men-generate tagihan untuk semua pelanggan aktif pada bulan <?= getMonthName($filterMonth) ?> <?= $filterYear ?>?\n\nCatatan: Pelanggan yang berstatus CUTI akan otomatis DILEWATI tanpa denda (FR-03).')) {
+    const isGenerated = <?= $isFullyGenerated ? 'true' : 'false' ?>;
+    const promptMsg = isGenerated 
+        ? 'Seluruh tagihan untuk pelanggan aktif periode <?= getMonthName($filterMonth) ?> <?= $filterYear ?> sudah terbit.\n\nSistem mengaktifkan proteksi idempotensi (0 tagihan ganda akan dibuat). Tetap jalankan pengecekan ulang?'
+        : 'Apakah Anda yakin ingin men-generate tagihan untuk semua pelanggan aktif pada bulan <?= getMonthName($filterMonth) ?> <?= $filterYear ?>?\n\nCatatan:\n1. Pelanggan CUTI otomatis DILEWATI tanpa tagihan fiktif (FR-03).\n2. Tagihan yang sudah ada tidak akan diduplikasi (Idempotensi R1).';
+
+    if (!confirm(promptMsg)) {
         return;
     }
 
