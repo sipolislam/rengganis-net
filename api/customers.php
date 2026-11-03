@@ -44,15 +44,22 @@ try {
                 throw new Exception('Status tidak valid. Harus aktif, cuti, atau isolir.');
             }
 
-            $success = updateCustomerStatus($pdo, $customerId, $newStatus, $reason, $currentUser['name']);
+            $billInfo = null;
+            $success = updateCustomerStatus($pdo, $customerId, $newStatus, $reason, $currentUser['name'], true, $billInfo);
             if (!$success) {
                 throw new Exception('Gagal memperbarui status pelanggan.');
             }
 
+            $msg = 'Status pelanggan berhasil diubah menjadi ' . ucfirst($newStatus);
+            if ($billInfo) {
+                $msg .= ". Tagihan bulan berjalan ({$billInfo['bill_number']}) otomatis diterbitkan.";
+            }
+
             echo json_encode([
-                'success' => true,
-                'message' => 'Status pelanggan berhasil diubah menjadi ' . ucfirst($newStatus),
-                'new_status' => $newStatus
+                'success'        => true,
+                'message'        => $msg,
+                'new_status'     => $newStatus,
+                'generated_bill' => $billInfo
             ]);
             break;
 

@@ -396,9 +396,31 @@ function generateCustomerBill(PDO $pdo, int $customerId, int $month, int $year, 
 }
 
 /**
- * Change customer status and log it (FR-03 & Section 11 Analytics)
+ * Change customer status and log it (FR-03 & Section 11 Analytics).
+ * If reactivated from 'cuti' to 'aktif', automatically generates a bill for the current period (F2 / T-009).
+ *
+ * @param PDO $pdo
+ * @param int $customerId
+ * @param string $newStatus
+ * @param string $reason
+ * @param string $changedBy
+ * @param bool $autoBillOnReactivation
+ * @param array|null &$generatedBillInfo Output parameter holding created bill data if generated
+ * @param int|null $targetMonth Optional target month for reactivation billing (defaults to current month)
+ * @param int|null $targetYear Optional target year for reactivation billing (defaults to current year)
+ * @return bool True on success
  */
-function updateCustomerStatus(PDO $pdo, int $customerId, string $newStatus, string $reason, string $changedBy, bool $autoBillOnReactivation = true): bool {
+function updateCustomerStatus(
+    PDO $pdo, 
+    int $customerId, 
+    string $newStatus, 
+    string $reason, 
+    string $changedBy, 
+    bool $autoBillOnReactivation = true,
+    ?array &$generatedBillInfo = null,
+    ?int $targetMonth = null,
+    ?int $targetYear = null
+): bool {
     $stmtCur = $pdo->prepare("SELECT status FROM customers WHERE id = ?");
     $stmtCur->execute([$customerId]);
     $oldStatus = $stmtCur->fetchColumn();
@@ -416,14 +438,20 @@ function updateCustomerStatus(PDO $pdo, int $customerId, string $newStatus, stri
         $stmtLog = $pdo->prepare("INSERT INTO status_logs (customer_id, old_status, new_status, reason, changed_by, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
         $stmtLog->execute([$customerId, $oldStatus, $newStatus, $reason ?: null, $changedBy]);
 
-        // Trade-off 13.2: If reactivated to 'aktif' in mid-month from 'cuti', optionally generate current month's bill
+        // F2 / T-009 Acceptance Criteria: If reactivated to 'aktif' in mid-month from 'cuti', automatically generate current month's bill
+        $createdBill = null;
         if ($oldStatus === 'cuti' && $newStatus === 'aktif' && $autoBillOnReactivation) {
-            $curMonth = (int)date('n');
-            $curYear = (int)date('Y');
-            generateCustomerBill($pdo, $customerId, $curMonth, $curYear);
+            $curMonth = $targetMonth ?: (int)date('n');
+            $curYear = $targetYear ?: (int)date('Y');
+            $createdBill = generateCustomerBill($pdo, $customerId, $curMonth, $curYear);
         }
 
         $pdo->commit();
+
+        if (func_num_args() >= 7) {
+            $generatedBillInfo = $createdBill;
+        }
+
         return true;
     } catch (Exception $e) {
         $pdo->rollBack();
