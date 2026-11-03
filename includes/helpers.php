@@ -185,13 +185,27 @@ function getStatusBadge(string $status): string {
  * @return array ['generated' => int, 'skipped' => int, 'skipped_cuti' => int]
  */
 function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10): array {
-    $dueDayPadded = str_pad((string)$dueDay, 2, '0', STR_PAD_LEFT);
+    if ($dueDay === 10) {
+        $settingDue = (int)getSetting($pdo, 'billing_due_day', '10');
+        if ($settingDue >= 1 && $settingDue <= 28) {
+            $dueDay = $settingDue;
+        }
+    }
+
     $monthPadded = str_pad((string)$month, 2, '0', STR_PAD_LEFT);
+    $dueDayPadded = str_pad((string)$dueDay, 2, '0', STR_PAD_LEFT);
     $dueDate = "{$year}-{$monthPadded}-{$dueDayPadded}";
 
     // Count customers in 'cuti'
     $stmtCutiCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'cuti'");
     $skippedCuti = (int)$stmtCutiCount->fetchColumn();
+
+    // Count customers in 'isolir'
+    $stmtIsolirCount = $pdo->query("SELECT COUNT(*) FROM customers WHERE status = 'isolir'");
+    $skippedIsolir = (int)$stmtIsolirCount->fetchColumn();
+
+    // Hitung akhir bulan target
+    $lastDayOfMonth = date('Y-m-t', strtotime("{$year}-{$monthPadded}-01"));
 
     // Select active customers who don't have a bill for this month & year
     $stmt = $pdo->prepare("
@@ -204,9 +218,10 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
               SELECT customer_id FROM bills 
               WHERE period_month = :m AND period_year = :y
           )
+        ORDER BY c.id ASC
     ");
     $stmt->execute([
-        ':period_end' => "{$year}-{$monthPadded}-28",
+        ':period_end' => $lastDayOfMonth,
         ':m'          => $month,
         ':y'          => $year
     ]);
@@ -214,31 +229,32 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
 
     if (empty($eligibleCustomers)) {
         return [
-            'generated'    => 0,
-            'skipped'      => 0,
-            'skipped_cuti' => $skippedCuti
+            'generated'      => 0,
+            'skipped'        => 0,
+            'skipped_cuti'   => $skippedCuti,
+            'skipped_isolir' => $skippedIsolir
         ];
     }
-
-    // Get current max bill sequence for this period
-    $prefix = "INV/{$year}{$monthPadded}/";
-    $stmtSeq = $pdo->prepare("SELECT MAX(bill_number) FROM bills WHERE bill_number LIKE :prefix");
-    $stmtSeq->execute([':prefix' => $prefix . '%']);
-    $maxBill = $stmtSeq->fetchColumn();
-    $seq = 0;
-    if ($maxBill) {
-        $parts = explode('/', $maxBill);
-        $seq = (int)end($parts);
-    }
-
-    $insertStmt = $pdo->prepare("
-        INSERT INTO bills (bill_number, customer_id, period_month, period_year, amount, due_date, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, 'belum_lunas', NOW())
-    ");
 
     $generatedCount = 0;
     $pdo->beginTransaction();
     try {
+        // Query nomor invoice urut terakhir dalam periode berjalan dengan transaction lock
+        $prefix = "INV/{$year}{$monthPadded}/";
+        $stmtSeq = $pdo->prepare("SELECT MAX(bill_number) FROM bills WHERE bill_number LIKE :prefix FOR UPDATE");
+        $stmtSeq->execute([':prefix' => $prefix . '%']);
+        $maxBill = $stmtSeq->fetchColumn();
+        $seq = 0;
+        if ($maxBill) {
+            $parts = explode('/', $maxBill);
+            $seq = (int)end($parts);
+        }
+
+        $insertStmt = $pdo->prepare("
+            INSERT INTO bills (bill_number, customer_id, period_month, period_year, amount, due_date, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'belum_lunas', NOW())
+        ");
+
         foreach ($eligibleCustomers as $cust) {
             $seq++;
             $billNum = $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
@@ -259,9 +275,10 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
     }
 
     return [
-        'generated'    => $generatedCount,
-        'skipped'      => 0,
-        'skipped_cuti' => $skippedCuti
+        'generated'      => $generatedCount,
+        'skipped'        => 0,
+        'skipped_cuti'   => $skippedCuti,
+        'skipped_isolir' => $skippedIsolir
     ];
 }
 
@@ -269,6 +286,13 @@ function generateMonthlyBills(PDO $pdo, int $month, int $year, int $dueDay = 10)
  * Generate a single bill for a customer (e.g. for mid-month reactivation or new installation)
  */
 function generateCustomerBill(PDO $pdo, int $customerId, int $month, int $year, int $dueDay = 10): ?array {
+    if ($dueDay === 10) {
+        $settingDue = (int)getSetting($pdo, 'billing_due_day', '10');
+        if ($settingDue >= 1 && $settingDue <= 28) {
+            $dueDay = $settingDue;
+        }
+    }
+
     $monthPadded = str_pad((string)$month, 2, '0', STR_PAD_LEFT);
     $dueDayPadded = str_pad((string)$dueDay, 2, '0', STR_PAD_LEFT);
     $dueDate = "{$year}-{$monthPadded}-{$dueDayPadded}";
@@ -285,6 +309,11 @@ function generateCustomerBill(PDO $pdo, int $customerId, int $month, int $year, 
     $stmtCust->execute([$customerId]);
     $cust = $stmtCust->fetch();
     if (!$cust) return null;
+
+    // Hard Limit Guardrail: Never generate bill for a customer on leave ('cuti')
+    if ($cust['status'] === 'cuti') {
+        return null;
+    }
 
     $prefix = "INV/{$year}{$monthPadded}/";
     $stmtSeq = $pdo->prepare("SELECT MAX(bill_number) FROM bills WHERE bill_number LIKE :prefix");
@@ -310,7 +339,7 @@ function generateCustomerBill(PDO $pdo, int $customerId, int $month, int $year, 
         $cust['price'],
         $dueDate
     ]);
-    $newId = $pdo->lastInsertId();
+    $newId = (int)$pdo->lastInsertId();
 
     return [
         'id'          => $newId,
