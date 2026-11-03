@@ -286,6 +286,16 @@
                     </p>
                 </div>
 
+                <!-- Special Notice for REAKTIVASI status (F2 / T-009 PRD requirement) -->
+                <div id="reaktivasiNotice" class="neu-inset rounded-2xl p-3.5 text-xs text-blue-900 space-y-1 hidden bg-blue-50/70 border border-blue-200/50">
+                    <div class="font-extrabold flex items-center gap-1.5 text-blue-800">
+                        <i class="fa-solid fa-bolt text-amber-500"></i> Reaktivasi Pelanggan (F2 / T-009):
+                    </div>
+                    <p class="text-[11px] text-blue-700 leading-relaxed font-medium">
+                        Pengaktifan kembali dari status Cuti akan <strong>otomatis menerbitkan tagihan bulan berjalan</strong> untuk pelanggan ini jika belum ada.
+                    </p>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Alasan / Catatan Perubahan</label>
                     <textarea id="statusReason" name="reason" rows="2" placeholder="Contoh: Mudik keluar kota 1 bulan / Renovasi rumah" class="neu-input w-full px-3.5 py-2.5 rounded-xl text-xs"></textarea>
@@ -505,8 +515,8 @@
                 }
 
                 closeStatusModal();
-                showToast('Status pelanggan berhasil diperbarui!');
-                setTimeout(() => window.location.reload(), 700);
+                showToast(res.message || 'Status pelanggan berhasil diperbarui!');
+                setTimeout(() => window.location.reload(), 1000);
             } catch (err) {
                 showToast(err.message, 'error');
             } finally {

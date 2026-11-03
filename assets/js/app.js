@@ -203,19 +203,37 @@ async function handleDownloadDigitalReceipt() {
 /**
  * Change Customer Status Modal (Aktif, Cuti, Isolir)
  */
+window.currentStatusCustomer = null;
+
+function toggleModalStatusNotices(oldStatus, newStatus) {
+    const cutiNotice = document.getElementById('cutiNotice');
+    const reaktivasiNotice = document.getElementById('reaktivasiNotice');
+    
+    if (cutiNotice) {
+        if (newStatus === 'cuti') {
+            cutiNotice.classList.remove('hidden');
+        } else {
+            cutiNotice.classList.add('hidden');
+        }
+    }
+    
+    if (reaktivasiNotice) {
+        if (oldStatus === 'cuti' && newStatus === 'aktif') {
+            reaktivasiNotice.classList.remove('hidden');
+        } else {
+            reaktivasiNotice.classList.add('hidden');
+        }
+    }
+}
+
 function openStatusModal(customer) {
+    window.currentStatusCustomer = customer;
     document.getElementById('statusCustomerId').value = customer.id;
     document.getElementById('statusCustomerName').textContent = customer.name + ' (' + customer.customer_code + ')';
     document.getElementById('statusSelect').value = customer.status;
     document.getElementById('statusReason').value = '';
     
-    // Warning text if changing to Cuti
-    const cutiNotice = document.getElementById('cutiNotice');
-    if (customer.status === 'cuti') {
-        cutiNotice.classList.remove('hidden');
-    } else {
-        cutiNotice.classList.add('hidden');
-    }
+    toggleModalStatusNotices(customer.status, customer.status);
 
     const modal = document.getElementById('statusModal');
     modal.classList.remove('hidden');
@@ -228,19 +246,13 @@ function closeStatusModal() {
     modal.classList.remove('flex');
 }
 
-// Toggle Cuti notice on status change in modal
+// Toggle Cuti and Reaktivasi notices on status change in modal
 document.addEventListener('DOMContentLoaded', () => {
     const sel = document.getElementById('statusSelect');
     if (sel) {
         sel.addEventListener('change', (e) => {
-            const cutiNotice = document.getElementById('cutiNotice');
-            if (cutiNotice) {
-                if (e.target.value === 'cuti') {
-                    cutiNotice.classList.remove('hidden');
-                } else {
-                    cutiNotice.classList.add('hidden');
-                }
-            }
+            const oldStatus = window.currentStatusCustomer ? window.currentStatusCustomer.status : '';
+            toggleModalStatusNotices(oldStatus, e.target.value);
         });
     }
 });

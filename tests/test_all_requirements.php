@@ -267,6 +267,78 @@ $singleBillIdempotent = (generateCustomerBill($pdo, (int)$sampleBills[0]['custom
 
 assertTest("T-008/F3/R1: Validasi idempotensi engine (0 tagihan baru) & proteksi database unique_customer_period (SQLSTATE 23000)", $idempotentEngineOk && $dbDuplicateBlocked && $singleBillIdempotent);
 
+// TEST 6.4: Reactivation of Leave Customer with Current Month Billing (T-009 / F2 / F3)
+// 1. Pick a customer who is currently on 'cuti' (e.g. RNG-004 or RNG-008)
+$stmtCutiTarget = $pdo->prepare("SELECT id, customer_code, package_id FROM customers WHERE status = 'cuti' LIMIT 1");
+$stmtCutiTarget->execute();
+$cutiTarget = $stmtCutiTarget->fetch();
+
+$reactivationBillingPassed = false;
+if ($cutiTarget) {
+    $reactCustId = (int)$cutiTarget['id'];
+    
+    // Ensure this customer has NO bill for the test batch period before reactivation
+    $stmtPreCheck = $pdo->prepare("SELECT COUNT(*) FROM bills WHERE customer_id = ? AND period_month = ? AND period_year = ?");
+    $stmtPreCheck->execute([$reactCustId, $testMonth, $testYear]);
+    $preBillCount = (int)$stmtPreCheck->fetchColumn();
+    
+    // Reactivate from 'cuti' to 'aktif' with autoBillOnReactivation = true for testMonth/testYear
+    $reactBillData = null;
+    $reactSuccess = updateCustomerStatus(
+        $pdo, 
+        $reactCustId, 
+        'aktif', 
+        'Reaktivasi pelanggan cuti pertengahan bulan (T-009)', 
+        'Admin Penguji T-009', 
+        true, 
+        $reactBillData, 
+        $testMonth, 
+        $testYear
+    );
+    
+    // Verify customer status updated to 'aktif'
+    $stmtPostStatus = $pdo->prepare("SELECT status FROM customers WHERE id = ?");
+    $stmtPostStatus->execute([$reactCustId]);
+    $postStatus = $stmtPostStatus->fetchColumn();
+    
+    // Verify bill was created in database
+    $stmtNewBill = $pdo->prepare("
+        SELECT b.*, p.price as expected_price 
+        FROM bills b 
+        JOIN packages p ON p.id = ? 
+        WHERE b.customer_id = ? AND b.period_month = ? AND b.period_year = ?
+    ");
+    $stmtNewBill->execute([$cutiTarget['package_id'], $reactCustId, $testMonth, $testYear]);
+    $createdDbBill = $stmtNewBill->fetch();
+    
+    // Verify status_logs has record of cuti -> aktif
+    $stmtReactLog = $pdo->prepare("
+        SELECT * FROM status_logs 
+        WHERE customer_id = ? AND old_status = 'cuti' AND new_status = 'aktif' 
+        ORDER BY id DESC LIMIT 1
+    ");
+    $stmtReactLog->execute([$reactCustId]);
+    $reactLog = $stmtReactLog->fetch();
+    
+    $reactivationBillingPassed = ($preBillCount === 0)
+        && $reactSuccess
+        && ($postStatus === 'aktif')
+        && ($reactBillData !== null)
+        && !empty($reactBillData['bill_number'])
+        && ($createdDbBill !== false)
+        && ($createdDbBill['status'] === 'belum_lunas')
+        && ((float)$createdDbBill['amount'] === (float)$createdDbBill['expected_price'])
+        && ($reactLog !== false);
+        
+    // Cleanup & restore customer state back to 'cuti' for idempotency of test suite
+    updateCustomerStatus($pdo, $reactCustId, 'cuti', 'Restore status cuti pasca pengujian T-009', 'Admin Penguji T-009', false);
+    if (!empty($createdDbBill['id'])) {
+        $pdo->prepare("DELETE FROM bills WHERE id = ?")->execute([$createdDbBill['id']]);
+    }
+}
+
+assertTest("T-009/F2/F3: Reaktivasi pelanggan dari cuti ke aktif otomatis menerbitkan tagihan bulan berjalan", $reactivationBillingPassed);
+
 // TEST 7: Payment Processing (FR-05)
 // Pick one unpaid bill from the test batch
 $stmtUnpaid = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' LIMIT 1");
