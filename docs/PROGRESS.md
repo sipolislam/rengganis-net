@@ -24,6 +24,7 @@ Task `T-011` telah berhasil di-merge ke branch `main`. Task `T-012` (Template pe
 | 2026-11-03 | `T-009`: Reaktivasi pelanggan cuti dengan tagihan bulan berjalan | branch `feat/T-009-reaktivasi-cuti` | Tagihan otomatis terbit saat cuti -> aktif, notifikasi modal reaktivasi, 23 test lolos |
 | 2026-11-03 | `T-010`: Manajemen paket layanan internet WiFi | branch `feat/T-010-packages-management` | Form CRUD paket WiFi, is_active toggle, referential safety, api/packages.php, 24 test lolos |
 | 2026-11-08 | `T-011`: Pencarian pelanggan dan filter status tagihan | branch `feat/T-011-filter-search` | Pencarian kode/nama/kontak/IP & filter paket di customers.php, filter status lunas/belum lunas & invoice di bills.php, API search, safe PDO params, 25 test lolos |
+| 2026-11-08 | `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar | branch `feat/T-012-wa-notification-template` | Template WhatsApp dual-channel (Online QR & Offline Tunai Pas), tombol aksi WA di bills.php, api/bills.php get_wa_billing, 26 test lolos |
 
 ## In Progress
 
