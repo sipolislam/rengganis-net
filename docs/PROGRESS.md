@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-017` telah berhasil di-merge ke branch `main`. Task `T-018` (Render struk digital ke format gambar PNG) telah selesai dikerjakan pada branch `feat/T-018-digital-receipt-png`. Mesin penangkap dan ekspor struk digital disempurnakan dengan integrasi pustaka `html2canvas` beresolusi tinggi (scale 3x, Retina 300dpi, useCORS, latar belakang putih), fungsi sanitasi nama berkas aman `getSafeReceiptFilename` (`Struk-INV-YYYYMM-XXXX.png`), serta mesin perender cadangan native HTML5 Canvas 2D `renderReceiptCanvasFallback` yang mampu menghasilkan gambar struk digital secara mandiri bila pustaka eksternal terhambat atau offline. Handler `handleDownloadDigitalReceipt` dan fungsi `exportReceiptAsPng` terhubung mulus di `app.js` dan lulus pengujian otomatis `TEST 7.5` di `tests/test_all_requirements.php` (31/31 PASS).
+Task `T-018` telah berhasil di-merge ke branch `main`. Mesin penangkap dan ekspor struk digital disempurnakan dengan integrasi pustaka `html2canvas` beresolusi tinggi (scale 3x, Retina 300dpi, useCORS, latar belakang putih), fungsi sanitasi nama berkas aman `getSafeReceiptFilename` (`Struk-INV-YYYYMM-XXXX.png`), serta mesin perender cadangan native HTML5 Canvas 2D `renderReceiptCanvasFallback` yang mampu menghasilkan gambar struk digital secara mandiri bila pustaka eksternal terhambat atau offline. Seluruh 31 pengujian otomatis di `tests/test_all_requirements.php` lulus 100% (31/31 PASS). Repositori siap untuk melanjutkan pengerjaan task `T-019` (Dasbor analitik omzet dan collection rate).
 
 ## Completed
 
