@@ -26,6 +26,7 @@ Task `T-013` telah berhasil di-merge ke branch `main`. Task `T-014` (Proses konf
 | 2026-11-08 | `T-011`: Pencarian pelanggan dan filter status tagihan | branch `feat/T-011-filter-search` | Pencarian kode/nama/kontak/IP & filter paket di customers.php, filter status lunas/belum lunas & invoice di bills.php, API search, safe PDO params, 25 test lolos |
 | 2026-11-08 | `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar | branch `feat/T-012-wa-notification-template` | Template WhatsApp dual-channel (Online QR & Offline Tunai Pas), tombol aksi WA di bills.php, api/bills.php get_wa_billing, 26 test lolos |
 | 2026-11-08 | `T-013`: Template pesan WhatsApp konfirmasi pelunasan | branch `feat/T-013-wa-receipt-template` | Kuitansi digital WhatsApp nomor transaksi resmi INV/..., tombol Kuitansi WA di bills.php & modal struk app.js, 27 test lolos |
+| 2026-11-08 | `T-014`: Proses konfirmasi pelunasan multi-metode bayar | branch `feat/T-014-payment-processing` | Pelunasan multi-metode bayar, transaksi atomik anti-dobel status 'belum_lunas', pembaruan baris realtime, 27 test lolos |
 
 ## In Progress
 
