@@ -895,6 +895,46 @@ NODE_EOF;
     $t018Passed = $hasHtml2CanvasLib && $hasPngDownloadUi && $hasPngExportFunctions && $nodePngOk;
     assertTest(11, "T-018/F5: Render struk digital ke format gambar PNG tajam (html2canvas & Canvas 2D engine)", $t018Passed);
 
+    // Sub-test 11.6: Uji Operasional Lapangan & Responsivitas Mobile (T-024 / F5)
+    $billsPageContent = file_get_contents(__DIR__ . '/../bills.php');
+    $custPageContent  = file_get_contents(__DIR__ . '/../customers.php');
+    $footerContent    = file_get_contents(__DIR__ . '/../includes/footer.php');
+    $customCssContent = file_get_contents(__DIR__ . '/../assets/css/custom.css');
+
+    // 1. Verifikasi Viewport Meta & PWA Mobile Capabilities di header.php
+    $hasMobileMeta = str_contains($headerContent, 'name="viewport"')
+        && str_contains($headerContent, 'width=device-width')
+        && str_contains($headerContent, 'name="theme-color"')
+        && str_contains($headerContent, 'name="mobile-web-app-capable"');
+
+    // 2. Verifikasi Kartu Tampilan Mobile Lapangan di bills.php
+    $hasMobileBillCards = str_contains($billsPageContent, 'mobile-bill-card-')
+        && str_contains($billsPageContent, 'block md:hidden')
+        && str_contains($billsPageContent, 'hidden md:block')
+        && str_contains($billsPageContent, 'touch-target-mobile')
+        && str_contains($billsPageContent, 'action-col-mobile')
+        && str_contains($billsPageContent, 'status-col-mobile');
+
+    // 3. Verifikasi Kartu Tampilan Mobile Lapangan di customers.php
+    $hasMobileCustCards = str_contains($custPageContent, 'block md:hidden')
+        && str_contains($custPageContent, 'hidden md:block')
+        && str_contains($custPageContent, 'touch-target-mobile');
+
+    // 4. Verifikasi Aturan CSS Responsif, Dialog Anti-Overflow & Safe Area di custom.css
+    $hasMobileCssRules = str_contains($customCssContent, '@media (max-width: 767px)')
+        && str_contains($customCssContent, '.touch-target-mobile')
+        && str_contains($customCssContent, 'min-height: 44px')
+        && str_contains($customCssContent, 'max-height: 94vh')
+        && str_contains($customCssContent, 'safe-area-inset-bottom');
+
+    // 5. Verifikasi Realtime Sync Mobile Card pada includes/footer.php
+    $hasFooterMobileSync = str_contains($footerContent, 'mobile-bill-card-${billId}')
+        && str_contains($footerContent, 'status-col-mobile')
+        && str_contains($footerContent, 'action-col-mobile');
+
+    $t024Passed = $hasMobileMeta && $hasMobileBillCards && $hasMobileCustCards && $hasMobileCssRules && $hasFooterMobileSync;
+    assertTest(11, "T-024/F5: Responsivitas mobile Android lapangan (viewport meta, touch target >=44px, kartu mobile tagihan & pelanggan, dialog anti-overflow)", $t024Passed);
+
     // ========================================================
     // KRITERIA 12: Dasbor Analitik, Laporan Rentang Tanggal, Ekspor CSV/Excel & Profil Usaha (FR-06, FR-07, Setup, T-019–T-022)
     // ========================================================
@@ -1231,7 +1271,7 @@ echo "HASIL AKHIR: {$kriteriaPassedCount} / 12 KRITERIA KEBUTUHAN TERPENUHI (" .
 echo "TOTAL SUB-PENGUJIAN: {$testsPassed} / {$totalTests} SUKSES\n";
 echo "--------------------------------------------------------\n";
 
-if ($allKriteriaPassed && $testsPassed === $totalTests && $totalTests === 35) {
+if ($allKriteriaPassed && $testsPassed === $totalTests && $totalTests >= 36) {
     echo "SELURUH 12 KRITERIA PRD & ACCEPTANCE CRITERIA TERPENUHI 100%!\n\n";
     exit(0);
 } else {

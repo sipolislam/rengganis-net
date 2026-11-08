@@ -340,7 +340,8 @@ $countTabs = $pdo->query("
                 <?php endif; ?>
             </div>
         <?php else: ?>
-            <div class="overflow-x-auto">
+            <!-- DESKTOP / TABLET VIEW: 7-COLUMN TABLE (hidden on mobile) -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="bg-slate-100/70 text-slate-400 border-b border-slate-200 uppercase font-black text-[10px] tracking-wider">
@@ -422,6 +423,80 @@ $countTabs = $pdo->query("
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- MOBILE CARD VIEW: FIELD-OPTIMIZED TOUCH CARDS (visible on mobile < md) -->
+            <div class="p-3 sm:p-4 space-y-3.5 block md:hidden">
+                <?php foreach ($customers as $c): ?>
+                    <?php
+                    $cJson = htmlspecialchars(json_encode($c), ENT_QUOTES, 'UTF-8');
+                    $waNumber = formatWhatsAppNumber($c['phone']);
+                    $dispPhone = formatDisplayPhone($c['phone']);
+                    ?>
+                    <div class="p-4 rounded-2xl neu-inset bg-white/75 border border-white shadow-sm space-y-3 mobile-card-shadow">
+                        <!-- Top: Code, Name & Status Badge -->
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                            <div>
+                                <span class="font-mono text-blue-700 font-bold text-xs tracking-tight"><?= e($c['customer_code']) ?></span>
+                                <h4 class="font-black text-sm text-slate-900 tracking-tight"><?= e($c['name']) ?></h4>
+                            </div>
+                            <div>
+                                <?= getStatusBadge($c['status']) ?>
+                            </div>
+                        </div>
+
+                        <!-- Contact & Address -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-xs">
+                                <a href="https://wa.me/<?= $waNumber ?>" target="_blank" class="text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1.5 touch-target-mobile">
+                                    <i class="fa-brands fa-whatsapp text-base"></i> <span><?= e($dispPhone) ?></span>
+                                </a>
+                                <span class="font-mono text-[11px] text-slate-500 font-bold">IP: <?= e($c['ip_address'] ?: '-') ?></span>
+                            </div>
+                            <div class="text-[11px] text-slate-600 font-medium leading-relaxed">
+                                <i class="fa-solid fa-location-dot text-slate-400 mr-1"></i><?= e($c['address']) ?>
+                            </div>
+                        </div>
+
+                        <!-- Package & Pricing -->
+                        <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Paket Langganan</span>
+                                <span class="font-bold text-slate-800"><?= e($c['package_name']) ?></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Tarif Bulanan</span>
+                                <span class="font-black text-blue-700 font-mono"><?= formatRupiah($c['package_price']) ?></span>
+                            </div>
+                        </div>
+
+                        <!-- Touch-Friendly Field Action Buttons -->
+                        <div class="pt-1 grid grid-cols-2 gap-2">
+                            <button onclick='openStatusModal(<?= $cJson ?>)' class="py-2.5 px-3 rounded-xl skeuo-btn-secondary text-amber-800 font-bold text-xs flex items-center justify-center gap-1.5 touch-target-mobile active:scale-95 transition-transform" title="Ubah Status Langganan">
+                                <i class="fa-solid fa-arrows-spin text-amber-600"></i> <span>Ubah Status</span>
+                            </button>
+
+                            <button onclick='viewCustomerDetail(<?= $c['id'] ?>)' class="py-2.5 px-3 rounded-xl skeuo-btn-secondary text-blue-800 font-bold text-xs flex items-center justify-center gap-1.5 touch-target-mobile active:scale-95 transition-transform" title="Lihat Profil">
+                                <i class="fa-solid fa-eye text-blue-600"></i> <span>Profil</span>
+                            </button>
+
+                            <?php if (isAdmin()): ?>
+                            <button onclick='openEditCustomerModal(<?= $cJson ?>)' class="py-2 px-3 rounded-xl skeuo-btn-secondary text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 touch-target-mobile active:scale-95 transition-transform" title="Edit Data">
+                                <i class="fa-solid fa-pen-to-square"></i> <span>Edit</span>
+                            </button>
+
+                            <form action="customers.php" method="POST" onsubmit="return confirm('Hapus pelanggan <?= e($c['name']) ?> beserta seluruh riwayatnya?')" class="w-full">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                <button type="submit" class="w-full py-2 px-3 rounded-xl skeuo-btn-secondary text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 touch-target-mobile active:scale-95 transition-transform" title="Hapus Pelanggan">
+                                    <i class="fa-solid fa-trash text-rose-600"></i> <span>Hapus</span>
+                                </button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
 
