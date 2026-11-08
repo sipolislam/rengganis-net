@@ -417,3 +417,345 @@ body {
     }
 }
 
+/* ==========================================================================
+   DARK MODE / TAMPILAN MALAM SYSTEM (Day/Night Theme Toggle)
+   High-contrast luxury dark neumorphic and skeuomorphic finish
+   ========================================================================== */
+html.dark {
+    --bg-base: #0b1120;
+    --bg-surface: #0f172a;
+    --bg-elevated: #1e293b;
+    --neu-shadow-dark: rgba(0, 0, 0, 0.7);
+    --neu-shadow-light: rgba(255, 255, 255, 0.035);
+    --neu-glow-blue: rgba(56, 189, 248, 0.35);
+    --neu-glow-emerald: rgba(52, 211, 153, 0.35);
+    --neu-glow-amber: rgba(251, 191, 36, 0.35);
+    --neu-glow-rose: rgba(251, 113, 133, 0.35);
+    color-scheme: dark;
+}
+
+html.dark body {
+    background-color: #0b1120 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Neumorphic surfaces in dark mode */
+html.dark .neu-flat {
+    background: #141f36 !important;
+    box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.6),
+               -6px -6px 14px rgba(255, 255, 255, 0.02) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html.dark .neu-flat-sm {
+    background: #141f36 !important;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6),
+               -3px -3px 8px rgba(255, 255, 255, 0.02) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html.dark .neu-inset {
+    background: #0b1120 !important;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.7),
+                inset -4px -4px 8px rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    color: #cbd5e1 !important;
+}
+
+html.dark .neu-inset-sm {
+    background: #0b1120 !important;
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.7),
+                inset -2px -2px 5px rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Skeuomorphic tactile panels */
+html.dark .skeuo-panel {
+    background: linear-gradient(145deg, #162032 0%, #0f172a 100%) !important;
+    box-shadow: 
+        8px 8px 20px rgba(0, 0, 0, 0.6),
+        -6px -6px 16px rgba(255, 255, 255, 0.02),
+        inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .skeuo-panel::before {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0%, transparent 40%) !important;
+}
+
+html.dark .skeuo-metal-header {
+    background: linear-gradient(180deg, #1e293b 0%, #111a2e 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .skeuo-btn-secondary {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    box-shadow: 
+        3px 4px 8px rgba(0, 0, 0, 0.5),
+        -2px -2px 6px rgba(255, 255, 255, 0.02),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0 !important;
+}
+
+html.dark .skeuo-btn-secondary:hover {
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Sidebar navigation */
+html.dark #mainSidebar {
+    background-color: #0f172a !important;
+    border-right-color: rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+html.dark #mainSidebar > div:first-child {
+    background: linear-gradient(to bottom, #141f36, #0f172a) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html.dark #mainSidebar .border-t {
+    background-color: #0f172a !important;
+    border-top-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html.dark .sidebar-link {
+    color: #94a3b8 !important;
+}
+
+html.dark .sidebar-link:hover {
+    color: #f1f5f9 !important;
+    background: #1e293b !important;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.5), -2px -2px 6px rgba(255, 255, 255, 0.02) !important;
+}
+
+html.dark .sidebar-link.active {
+    color: #60a5fa !important;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(30, 58, 138, 0.35) 100%) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), 0 0 12px rgba(37, 99, 235, 0.2) !important;
+}
+
+html.dark .sidebar-icon-box {
+    background: #141f36 !important;
+    color: #94a3b8 !important;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5), -1px -1px 3px rgba(255, 255, 255, 0.02) !important;
+}
+
+html.dark .sidebar-link.active .sidebar-icon-box {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Top header and bottom footer */
+html.dark header {
+    background: linear-gradient(to bottom, #141f36, #0f172a) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark footer {
+    background: linear-gradient(to right, #0f172a, #141f36) !important;
+    border-top-color: rgba(255, 255, 255, 0.07) !important;
+    color: #94a3b8 !important;
+}
+
+/* Inputs and interactive controls */
+html.dark .neu-input,
+html.dark select.neu-input,
+html.dark input.neu-input,
+html.dark textarea.neu-input {
+    background-color: #0b1120 !important;
+    color: #f1f5f9 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.7),
+                inset -2px -2px 5px rgba(255, 255, 255, 0.02) !important;
+}
+
+html.dark .neu-input:focus,
+html.dark select.neu-input:focus,
+html.dark input.neu-input:focus,
+html.dark textarea.neu-input:focus {
+    background-color: #0e1726 !important;
+    border-color: #38bdf8 !important;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.8),
+                0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+}
+
+html.dark option {
+    background-color: #0f172a;
+    color: #f1f5f9;
+}
+
+/* Typography contrast */
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+    color: #f8fafc !important;
+}
+
+html.dark .text-slate-700 {
+    color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-600 {
+    color: #94a3b8 !important;
+}
+
+html.dark .text-slate-500 {
+    color: #64748b !important;
+}
+
+/* Card and container background overrides */
+html.dark .bg-\[\#edf3f9\],
+html.dark .bg-\[\#e9eff6\],
+html.dark .bg-\[\#f8fbff\],
+html.dark .bg-\[\#eaf0f8\],
+html.dark .bg-\[\#eef4fb\],
+html.dark .bg-\[\#e7eef7\],
+html.dark .bg-\[\#e4ebf4\] {
+    background-color: #0f172a !important;
+}
+
+html.dark .bg-white\/40,
+html.dark .bg-white\/50,
+html.dark .bg-white\/60,
+html.dark .bg-white\/70,
+html.dark .bg-white\/80 {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+html.dark .border-slate-200\/60,
+html.dark .border-slate-200,
+html.dark .border-slate-300\/60,
+html.dark .border-slate-300,
+html.dark .border-slate-100,
+html.dark .border-white\/80,
+html.dark .border-white\/70,
+html.dark .border-white\/60,
+html.dark .border-white {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Modals */
+html.dark #paymentModal .bg-\[\#edf3f9\],
+html.dark #statusModal .bg-\[\#edf3f9\],
+html.dark #receiptModal .bg-\[\#edf3f9\],
+html.dark #addUserModal .bg-\[\#edf3f9\],
+html.dark #editUserModal .bg-\[\#edf3f9\],
+html.dark #addCustomerModal .bg-\[\#edf3f9\],
+html.dark #editCustomerModal .bg-\[\#edf3f9\],
+html.dark #customerDetailModal .bg-\[\#edf3f9\],
+html.dark #addPackageModal .bg-\[\#edf3f9\],
+html.dark #editPackageModal .bg-\[\#edf3f9\] {
+    background-color: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Tables */
+html.dark table thead tr {
+    background-color: #0b1120 !important;
+}
+
+html.dark table thead th {
+    color: #94a3b8 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Status Badges */
+html.dark .bg-emerald-100,
+html.dark .bg-emerald-100\/70,
+html.dark .bg-emerald-50 {
+    background-color: rgba(6, 78, 59, 0.45) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+html.dark .bg-rose-100,
+html.dark .bg-rose-100\/70,
+html.dark .bg-rose-50 {
+    background-color: rgba(136, 19, 55, 0.45) !important;
+    color: #fda4af !important;
+    border-color: rgba(244, 63, 94, 0.4) !important;
+}
+
+html.dark .bg-amber-100,
+html.dark .bg-amber-100\/70,
+html.dark .bg-amber-50 {
+    background-color: rgba(120, 53, 15, 0.45) !important;
+    color: #fcd34d !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+html.dark .bg-blue-100,
+html.dark .bg-blue-100\/70,
+html.dark .bg-blue-50 {
+    background-color: rgba(30, 58, 138, 0.45) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+html.dark .bg-cyan-100,
+html.dark .bg-cyan-50 {
+    background-color: rgba(22, 78, 99, 0.45) !important;
+    color: #67e8f9 !important;
+    border-color: rgba(6, 182, 212, 0.4) !important;
+}
+
+html.dark .bg-indigo-100,
+html.dark .bg-indigo-50 {
+    background-color: rgba(49, 46, 129, 0.45) !important;
+    color: #a5b4fc !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Custom Scrollbar for Dark Mode */
+html.dark ::-webkit-scrollbar-track {
+    background: #0b1120;
+}
+html.dark ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border: 2px solid #0b1120;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* Ensure Physical Thermal Struk is ALWAYS white paper in Dark Mode */
+html.dark #digitalReceiptCard {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border-color: #cbd5e1 !important;
+}
+
+html.dark #digitalReceiptCard .text-slate-900,
+html.dark #digitalReceiptCard .text-slate-800 {
+    color: #0f172a !important;
+}
+
+html.dark #digitalReceiptCard .text-slate-500,
+html.dark #digitalReceiptCard .text-slate-600 {
+    color: #64748b !important;
+}
+
+html.dark #thermalReceiptPrintArea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+html.dark #thermalReceiptPrintArea * {
+    color: #000000 !important;
+}
+
+
