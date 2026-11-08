@@ -241,7 +241,7 @@ try {
             $stmtSearch->execute($params);
             $results = $stmtSearch->fetchAll();
 
-            $formatted = array_map(function($b) {
+            $formatted = array_map(function($b) use ($pdo) {
                 return [
                     'id'               => (int)$b['id'],
                     'bill_number'      => $b['bill_number'],
@@ -261,7 +261,8 @@ try {
                     'due_date'         => $b['due_date'],
                     'payment_date'     => $b['payment_date'],
                     'payment_method'   => $b['payment_method'],
-                    'collector_name'   => $b['collector_name']
+                    'collector_name'   => $b['collector_name'],
+                    'wa_billing_url'   => buildBillingWhatsAppUrl($b, $pdo)
                 ];
             }, $results);
 
@@ -269,6 +270,45 @@ try {
                 'success' => true,
                 'count'   => count($formatted),
                 'data'    => $formatted
+            ]);
+            break;
+
+        case 'get_wa_billing':
+            // WhatsApp billing notification template & wa.me URL generator (T-012 / F4 / R2)
+            $billId = (int)($_GET['id'] ?? 0);
+            if ($billId <= 0) {
+                throw new Exception('ID Tagihan tidak valid');
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT b.*, c.customer_code, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
+                       p.name AS package_name, p.speed AS package_speed
+                FROM bills b
+                JOIN customers c ON b.customer_id = c.id
+                JOIN packages p ON c.package_id = p.id
+                WHERE b.id = ?
+            ");
+            $stmt->execute([$billId]);
+            $b = $stmt->fetch();
+            if (!$b) {
+                throw new Exception('Tagihan tidak ditemukan');
+            }
+
+            $msg = buildBillingWhatsAppMessage($b, $pdo);
+            $url = buildBillingWhatsAppUrl($b, $pdo);
+
+            echo json_encode([
+                'success'       => true,
+                'bill_id'       => $billId,
+                'bill_number'   => $b['bill_number'],
+                'customer_name' => $b['customer_name'],
+                'customer_code' => $b['customer_code'],
+                'customer_phone'=> $b['customer_phone'],
+                'wa_number'     => formatWhatsAppNumber($b['customer_phone']),
+                'amount'        => (float)$b['amount'],
+                'amount_format' => formatRupiah($b['amount']),
+                'message'       => $msg,
+                'wa_url'        => $url
             ]);
             break;
 
