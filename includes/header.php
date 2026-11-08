@@ -34,10 +34,80 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (Play CDN) -->
+    <!-- Immediate Theme Initialization (Zero Flash-of-Unstyled-Theme / Anti-FOUC) -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('rengganis_theme');
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch(e) {}
+        })();
+
+        function updateThemeUI(isDark) {
+            const btnLight = document.getElementById('themeBtnLight');
+            const btnDark = document.getElementById('themeBtnDark');
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', isDark ? '#0b1120' : '#1e3a8a');
+            }
+
+            if (btnLight && btnDark) {
+                if (isDark) {
+                    btnLight.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-slate-200";
+                    const lightIcon = btnLight.querySelector('i');
+                    if (lightIcon) lightIcon.className = "fa-solid fa-sun text-xs text-slate-400";
+                    
+                    btnDark.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer neu-flat bg-slate-800 text-amber-300 shadow-sm border border-slate-700/60";
+                    const darkIcon = btnDark.querySelector('i');
+                    if (darkIcon) darkIcon.className = "fa-solid fa-moon text-xs text-amber-300 drop-shadow-[0_0_6px_rgba(252,211,77,0.5)]";
+                } else {
+                    btnLight.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer neu-flat bg-white text-amber-600 shadow-sm border border-amber-200/50";
+                    const lightIcon = btnLight.querySelector('i');
+                    if (lightIcon) lightIcon.className = "fa-solid fa-sun text-xs text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]";
+                    
+                    btnDark.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-slate-600";
+                    const darkIcon = btnDark.querySelector('i');
+                    if (darkIcon) darkIcon.className = "fa-solid fa-moon text-xs text-slate-400";
+                }
+            }
+        }
+
+        function setTheme(theme) {
+            const isDark = (theme === 'dark');
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('rengganis_theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('rengganis_theme', 'light');
+            }
+            updateThemeUI(isDark);
+            try {
+                window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: isDark ? 'dark' : 'light' } }));
+            } catch(e) {}
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            setTheme(isDark ? 'light' : 'dark');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            updateThemeUI(isDark);
+        });
+    </script>
+    
+    <!-- Tailwind CSS (Play CDN) with Dark Mode enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -76,7 +146,7 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
         window.csrfToken = "<?= e(generateCsrfToken()) ?>";
     </script>
 </head>
-<body class="bg-[#e9eff6] text-slate-800 antialiased overflow-hidden flex h-screen h-[100dvh]">
+<body class="bg-[#e9eff6] dark:bg-[#0b1120] text-slate-800 dark:text-slate-100 antialiased overflow-hidden flex h-screen h-[100dvh] transition-colors duration-200">
 
     <!-- Mobile Sidebar Backdrop Overlay -->
     <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm hidden md:hidden transition-opacity"></div>
@@ -270,24 +340,36 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
                 </div>
             </div>
 
-            <!-- Right: Realtime Digital Clock, Status & Quick Action -->
-            <div class="flex items-center gap-3">
+            <!-- Right: Realtime Digital Clock, Day/Night Mode & Quick Action -->
+            <div class="flex items-center gap-2 sm:gap-3">
                 
                 <!-- Live Clock Widget -->
-                <div class="hidden lg:flex items-center gap-2 neu-inset px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-slate-700">
-                    <i class="fa-regular fa-clock text-blue-600"></i>
+                <div class="hidden lg:flex items-center gap-2 neu-inset px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
+                    <i class="fa-regular fa-clock text-blue-600 dark:text-cyan-400"></i>
                     <span id="liveClockWidget"><?= date('H:i:s') ?> WIB</span>
+                </div>
+
+                <!-- Day / Night Mode Toggle Widget (Fitur Tampilan Siang & Malam) -->
+                <div class="flex items-center p-1 rounded-xl neu-inset gap-1 text-xs select-none" id="themeSwitchPill" role="group" aria-label="Mode Tampilan Siang / Malam">
+                    <button type="button" onclick="setTheme('light')" id="themeBtnLight" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer neu-flat bg-white text-amber-600 shadow-sm border border-amber-200/50" title="Beralih ke Tampilan Siang (Light Mode)">
+                        <i class="fa-solid fa-sun text-xs text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]"></i>
+                        <span class="hidden sm:inline text-[11px] font-semibold">Siang</span>
+                    </button>
+                    <button type="button" onclick="setTheme('dark')" id="themeBtnDark" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Beralih ke Tampilan Malam (Dark Mode)">
+                        <i class="fa-solid fa-moon text-xs text-slate-400"></i>
+                        <span class="hidden sm:inline text-[11px] font-semibold">Malam</span>
+                    </button>
                 </div>
 
                 <!-- Quick Action Button -->
                 <?php if (isAdmin()): ?>
-                <a href="customers.php?action=create" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl skeuo-btn-primary text-xs font-bold">
+                <a href="customers.php?action=create" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl skeuo-btn-primary text-xs font-bold shadow-md">
                     <i class="fa-solid fa-plus"></i> Pelanggan Baru
                 </a>
                 <?php endif; ?>
 
                 <!-- User Profile Quick Icon -->
-                <div class="w-10 h-10 rounded-xl neu-flat flex items-center justify-center text-blue-700 font-bold text-sm shadow-sm" title="<?= e($currentUser['name']) ?>">
+                <div class="w-10 h-10 rounded-xl neu-flat flex items-center justify-center text-blue-700 dark:text-cyan-400 font-bold text-sm shadow-sm" title="<?= e($currentUser['name']) ?>">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
 
