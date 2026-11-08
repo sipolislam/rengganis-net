@@ -38,7 +38,7 @@ Agen AI hanya boleh mengambil task dengan status `todo` yang seluruh dependensin
 | T-013 | Template pesan WhatsApp konfirmasi pelunasan | F4 | S | done | feat/T-013-wa-receipt-template | T-012 | Tombol WA menghasilkan teks kuitansi resmi dengan nomor transaksi tagihan |
 | T-014 | Proses konfirmasi pelunasan multi-metode bayar | F5 | M | done | feat/T-014-payment-processing | T-006 | Tagihan berubah lunas, tercatat metode bayar, stempel waktu, dan nama kolektor |
 | T-015 | Desain antarmuka modal struk pembayaran | F5 | S | done | feat/T-015-receipt-modal-ui | T-014 | Modal struk muncul otomatis pasca pelunasan dengan rincian pembayaran lengkap |
-| T-016 | Driver Web Bluetooth API printer thermal ESC/POS | F5 | L | review | feat/T-016-bluetooth-escpos-driver | T-015 | Buffer byte ESC/POS terkirim via Bluetooth dan tercetak pada printer thermal 58mm/80mm |
+| T-016 | Driver Web Bluetooth API printer thermal ESC/POS | F5 | L | done | feat/T-016-bluetooth-escpos-driver | T-015 | Buffer byte ESC/POS terkirim via Bluetooth dan tercetak pada printer thermal 58mm/80mm |
 | T-017 | Fallback cetak browser dan reconnect printer Bluetooth | F5, R3 | M | todo | feat/T-017-bluetooth-fallback | T-016 | Sistem tidak hang saat Bluetooth mati; tombol cetak @media print 58mm aktif |
 | T-018 | Render struk digital ke format gambar PNG | F5 | M | todo | feat/T-018-digital-receipt-png | T-015 | Pustaka html2canvas merender struk menjadi gambar PNG tajam yang siap diunduh |
 | T-019 | Dasbor analitik omzet dan collection rate | F6 | M | todo | feat/T-019-dashboard-analytics | T-014 | Dasbor menampilkan KPI omzet bulanan, persentase tertagih, dan ringkasan metode |
