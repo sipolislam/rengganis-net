@@ -453,20 +453,33 @@
                 closePaymentModal();
                 showReceiptModal(res.data);
 
-                // Update row in table if on bills page or dashboard
+                // Update row in table if on bills page or dashboard (T-014 / F5)
                 const row = document.getElementById(`bill-row-${billId}`);
                 if (row) {
-                    row.querySelector('.status-col').innerHTML = `
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
-                            <span class="led-pulse active-green"></span> Lunas
-                        </span>
-                    `;
+                    const statusCol = row.querySelector('.status-col');
+                    if (statusCol) {
+                        statusCol.innerHTML = `
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
+                                <span class="led-pulse active-green"></span> Lunas
+                            </span>
+                            <div class="text-[10px] text-slate-400 mt-0.5 font-semibold">${res.data.payment_method || 'Tunai'}</div>
+                        `;
+                    }
                     const actionCol = row.querySelector('.action-col');
                     if (actionCol) {
                         actionCol.innerHTML = `
-                            <button onclick='showReceiptModal(${JSON.stringify(res.data)})' class="px-3 py-1.5 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5">
-                                <i class="fa-solid fa-receipt text-blue-600"></i> Struk
-                            </button>
+                            <div class="flex items-center justify-end gap-1.5">
+                                ${res.data.wa_receipt_url ? `
+                                <a href="${res.data.wa_receipt_url}" target="_blank"
+                                   class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+                                   title="Kirim Kuitansi Pelunasan via WhatsApp">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span class="hidden md:inline">Kuitansi WA</span>
+                                </a>` : ''}
+                                <button onclick='showReceiptModal(${JSON.stringify(res.data)})' class="px-3.5 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5 text-blue-700 shadow-sm">
+                                    <i class="fa-solid fa-receipt text-blue-600"></i> Struk
+                                </button>
+                            </div>
                         `;
                     }
                 }

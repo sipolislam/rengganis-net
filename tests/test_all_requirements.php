@@ -423,16 +423,43 @@ $hasValidReceiptUrl = str_starts_with($receiptUrl, 'https://wa.me/6281234567802?
 $t013Passed = $hasReceiptHeader && $hasTxNumber && $hasCustDetails && $hasAmountAndMethod && $hasCollectorAndStatus && $hasFooterNote && $hasValidReceiptUrl;
 assertTest("T-013/F4: Tombol WA menghasilkan teks kuitansi resmi beserta nomor transaksi tagihan", $t013Passed);
 
-// TEST 7: Payment Processing (FR-05)
-// Pick one unpaid bill from the test batch
-$stmtUnpaid = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' LIMIT 1");
-$stmtUnpaid->execute([$testMonth, $testYear]);
-$unpaidId = (int)$stmtUnpaid->fetchColumn();
+// TEST 7: Multi-Method Payment Processing & Idempotency (T-014 / F5 / FR-05)
+// 1. Pelunasan Tagihan Metode Tunai
+$stmtUnpaid1 = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' ORDER BY id ASC LIMIT 1");
+$stmtUnpaid1->execute([$testMonth, $testYear]);
+$unpaidId1 = (int)$stmtUnpaid1->fetchColumn();
 
-if ($unpaidId > 0) {
-    $paidBill = processBillPayment($pdo, $unpaidId, 'Tunai', 'Budi Santoso (Kolektor)', 'Uji coba pembayaran lapangan');
-    assertTest("FR-05: Tagihan berhasil diproses lunas dengan timestamp & collector", $paidBill && $paidBill['status'] === 'lunas' && !empty($paidBill['payment_date']));
+$paidBillTunai = null;
+if ($unpaidId1 > 0) {
+    $paidBillTunai = processBillPayment($pdo, $unpaidId1, 'Tunai', 'Budi Santoso (Kolektor)', 'Uji coba pembayaran tunai lapangan');
 }
+$tunaiOk = $paidBillTunai 
+    && $paidBillTunai['status'] === 'lunas' 
+    && $paidBillTunai['payment_method'] === 'Tunai'
+    && !empty($paidBillTunai['payment_date'])
+    && $paidBillTunai['collector_name'] === 'Budi Santoso (Kolektor)';
+
+// 2. Pelunasan Tagihan Metode Non-Tunai (Transfer Bank / QRIS)
+$stmtUnpaid2 = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' AND id != ? ORDER BY id ASC LIMIT 1");
+$stmtUnpaid2->execute([$testMonth, $testYear, $unpaidId1]);
+$unpaidId2 = (int)$stmtUnpaid2->fetchColumn();
+
+$paidBillTransfer = null;
+if ($unpaidId2 > 0) {
+    $paidBillTransfer = processBillPayment($pdo, $unpaidId2, 'Transfer BCA', 'Siti Aminah (Kasir)', 'Lunas via m-BCA');
+}
+$transferOk = $paidBillTransfer 
+    && $paidBillTransfer['status'] === 'lunas' 
+    && $paidBillTransfer['payment_method'] === 'Transfer BCA'
+    && !empty($paidBillTransfer['payment_date'])
+    && $paidBillTransfer['collector_name'] === 'Siti Aminah (Kasir)';
+
+// 3. Pencegahan Pelunasan Ganda (Idempotensi pelunasan tagihan yang sudah lunas)
+$doublePayAttempt = $unpaidId1 > 0 ? processBillPayment($pdo, $unpaidId1, 'Tunai', 'Hacker / Dobel Klik') : null;
+$doublePayPrevented = ($doublePayAttempt === null);
+
+$t014Passed = $tunaiOk && $transferOk && $doublePayPrevented;
+assertTest("T-014/F5: Proses pelunasan multi-metode (Tunai/Transfer), pencatatan stempel waktu, nama kolektor, & proteksi anti-dobel", $t014Passed);
 
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [

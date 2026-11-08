@@ -460,7 +460,9 @@ function updateCustomerStatus(
 }
 
 /**
- * Process a bill payment and mark as Lunas
+ * Process a bill payment and mark as Lunas (T-014 / F5).
+ * Validates bill existence, prevents double-payment via atomic transaction,
+ * records payment method, payment timestamp, collector name, and optional notes.
  */
 function processBillPayment(PDO $pdo, int $billId, string $method, string $collectorName, ?string $notes = null): ?array {
     $stmt = $pdo->prepare("
@@ -475,13 +477,44 @@ function processBillPayment(PDO $pdo, int $billId, string $method, string $colle
     $bill = $stmt->fetch();
     if (!$bill) return null;
 
+    // Idempotency: prevent double payment if already paid
+    if ($bill['status'] === 'lunas') {
+        return null;
+    }
+
+    $validMethods = [
+        'Tunai', 'Transfer BCA', 'Transfer BRI', 'Transfer Mandiri', 'Transfer BNI',
+        'DANA / Gopay', 'DANA', 'GoPay', 'OVO', 'QRIS', 'Lainnya'
+    ];
+    $method = trim($method);
+    if (empty($method)) {
+        $method = 'Tunai';
+    }
+
+    $collectorName = trim($collectorName);
+    if (empty($collectorName)) {
+        $collectorName = 'Admin Kasir';
+    }
+    $notes = !empty($notes) ? trim($notes) : null;
     $now = date('Y-m-d H:i:s');
-    $stmtUp = $pdo->prepare("
-        UPDATE bills 
-        SET status = 'lunas', payment_date = ?, payment_method = ?, collector_name = ?, notes = ?, updated_at = NOW()
-        WHERE id = ?
-    ");
-    $stmtUp->execute([$now, $method, $collectorName, $notes, $billId]);
+
+    $pdo->beginTransaction();
+    try {
+        $stmtUp = $pdo->prepare("
+            UPDATE bills 
+            SET status = 'lunas', payment_date = ?, payment_method = ?, collector_name = ?, notes = ?, updated_at = NOW()
+            WHERE id = ? AND status = 'belum_lunas'
+        ");
+        $stmtUp->execute([$now, $method, $collectorName, $notes, $billId]);
+        if ($stmtUp->rowCount() === 0) {
+            $pdo->rollBack();
+            return null; // Concurrently updated
+        }
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 
     // Refresh updated bill
     $bill['status'] = 'lunas';
