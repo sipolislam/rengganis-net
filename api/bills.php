@@ -194,6 +194,84 @@ try {
             ]);
             break;
 
+        case 'search':
+            // Fast bill searching and status filtering (T-011 / F3)
+            $q = trim($_GET['q'] ?? '');
+            $month = isset($_GET['month']) ? (int)$_GET['month'] : 0;
+            $year = isset($_GET['year']) ? (int)$_GET['year'] : 0;
+            $status = trim($_GET['status'] ?? 'all');
+            $limit = (int)($_GET['limit'] ?? 20);
+            if ($limit <= 0 || $limit > 100) {
+                $limit = 20;
+            }
+
+            $sql = "
+                SELECT b.*, c.customer_code, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
+                       p.name AS package_name, p.speed AS package_speed
+                FROM bills b
+                JOIN customers c ON b.customer_id = c.id
+                JOIN packages p ON c.package_id = p.id
+                WHERE 1=1
+            ";
+            $params = [];
+
+            if ($month >= 1 && $month <= 12) {
+                $sql .= " AND b.period_month = :month";
+                $params[':month'] = $month;
+            }
+            if ($year >= 2020 && $year <= 2100) {
+                $sql .= " AND b.period_year = :year";
+                $params[':year'] = $year;
+            }
+            if ($status !== 'all' && in_array($status, ['lunas', 'belum_lunas'])) {
+                $sql .= " AND b.status = :status";
+                $params[':status'] = $status;
+            }
+            if (!empty($q)) {
+                $sql .= " AND (b.bill_number LIKE :q1 OR c.name LIKE :q2 OR c.customer_code LIKE :q3 OR c.phone LIKE :q4)";
+                $term = "%{$q}%";
+                $params[':q1'] = $term;
+                $params[':q2'] = $term;
+                $params[':q3'] = $term;
+                $params[':q4'] = $term;
+            }
+
+            $sql .= " ORDER BY b.period_year DESC, b.period_month DESC, b.id DESC LIMIT " . (int)$limit;
+            $stmtSearch = $pdo->prepare($sql);
+            $stmtSearch->execute($params);
+            $results = $stmtSearch->fetchAll();
+
+            $formatted = array_map(function($b) {
+                return [
+                    'id'               => (int)$b['id'],
+                    'bill_number'      => $b['bill_number'],
+                    'customer_id'      => (int)$b['customer_id'],
+                    'customer_code'    => $b['customer_code'],
+                    'customer_name'    => $b['customer_name'],
+                    'customer_phone'   => $b['customer_phone'],
+                    'customer_address' => $b['customer_address'],
+                    'period_month'     => (int)$b['period_month'],
+                    'period_year'      => (int)$b['period_year'],
+                    'period_label'     => getMonthName((int)$b['period_month']) . ' ' . $b['period_year'],
+                    'package_name'     => $b['package_name'],
+                    'package_speed'    => $b['package_speed'],
+                    'amount'           => (float)$b['amount'],
+                    'amount_formatted' => formatRupiah($b['amount']),
+                    'status'           => $b['status'],
+                    'due_date'         => $b['due_date'],
+                    'payment_date'     => $b['payment_date'],
+                    'payment_method'   => $b['payment_method'],
+                    'collector_name'   => $b['collector_name']
+                ];
+            }, $results);
+
+            echo json_encode([
+                'success' => true,
+                'count'   => count($formatted),
+                'data'    => $formatted
+            ]);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Aksi tidak dikenal']);

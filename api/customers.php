@@ -109,6 +109,76 @@ try {
             ]);
             break;
 
+        case 'search':
+            // Fast customer search by name, code, phone, address, or IP (T-011 / F2)
+            $q = trim($_GET['q'] ?? '');
+            $status = trim($_GET['status'] ?? 'all');
+            $packageId = (int)($_GET['package_id'] ?? 0);
+            $limit = (int)($_GET['limit'] ?? 20);
+            if ($limit <= 0 || $limit > 100) {
+                $limit = 20;
+            }
+
+            $sql = "
+                SELECT c.*, p.name AS package_name, p.speed AS package_speed, p.price AS package_price
+                FROM customers c
+                JOIN packages p ON c.package_id = p.id
+                WHERE 1=1
+            ";
+            $params = [];
+
+            if ($status !== 'all' && in_array($status, ['aktif', 'cuti', 'isolir'])) {
+                $sql .= " AND c.status = :status";
+                $params[':status'] = $status;
+            }
+
+            if ($packageId > 0) {
+                $sql .= " AND c.package_id = :package_id";
+                $params[':package_id'] = $packageId;
+            }
+
+            if (!empty($q)) {
+                $sql .= " AND (c.name LIKE :q1 OR c.customer_code LIKE :q2 OR c.phone LIKE :q3 OR c.address LIKE :q4 OR c.ip_address LIKE :q5)";
+                $term = "%{$q}%";
+                $params[':q1'] = $term;
+                $params[':q2'] = $term;
+                $params[':q3'] = $term;
+                $params[':q4'] = $term;
+                $params[':q5'] = $term;
+            }
+
+            $sql .= " ORDER BY c.customer_code ASC LIMIT " . (int)$limit;
+            $stmtSearch = $pdo->prepare($sql);
+            $stmtSearch->execute($params);
+            $results = $stmtSearch->fetchAll();
+
+            $formatted = array_map(function($c) {
+                return [
+                    'id'                => (int)$c['id'],
+                    'customer_code'     => $c['customer_code'],
+                    'name'              => $c['name'],
+                    'phone'             => $c['phone'],
+                    'phone_display'     => formatDisplayPhone($c['phone']),
+                    'wa_number'         => formatWhatsAppNumber($c['phone']),
+                    'address'           => $c['address'],
+                    'package_id'        => (int)$c['package_id'],
+                    'package_name'      => $c['package_name'],
+                    'package_speed'     => $c['package_speed'],
+                    'package_price'     => (float)$c['package_price'],
+                    'price_formatted'   => formatRupiah($c['package_price']),
+                    'ip_address'        => $c['ip_address'],
+                    'status'            => $c['status'],
+                    'installation_date' => $c['installation_date']
+                ];
+            }, $results);
+
+            echo json_encode([
+                'success' => true,
+                'count'   => count($formatted),
+                'data'    => $formatted
+            ]);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Aksi tidak dikenal']);
