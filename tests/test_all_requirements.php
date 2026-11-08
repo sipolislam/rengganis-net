@@ -1105,6 +1105,70 @@ assertTest("T-011/F2/F3: Pencarian nama/kode pelanggan dan filter status tagihan
 $compName = getSetting($pdo, 'company_name');
 assertTest("FR-06/FR-07: Pengaturan identitas struk & logo perusahaan tersimpan ('{$compName}')", !empty($compName));
 
+// TEST 8.4: Pengaturan Profil Usaha & Catatan Kaki Struk (T-022 / Setup / FR-06 / FR-07)
+$settingsPageContent = file_get_contents(__DIR__ . '/../settings.php');
+
+// 1. Verifikasi Elemen Formulir & Live Simulator settings.php
+$hasSettingsFormUi = str_contains($settingsPageContent, 'name="company_name"')
+    && str_contains($settingsPageContent, 'name="company_tagline"')
+    && str_contains($settingsPageContent, 'name="company_phone"')
+    && str_contains($settingsPageContent, 'name="company_email"')
+    && str_contains($settingsPageContent, 'name="company_address"')
+    && str_contains($settingsPageContent, 'name="billing_due_day"')
+    && str_contains($settingsPageContent, 'name="receipt_footer"')
+    && str_contains($settingsPageContent, 'name="bank_info"')
+    && str_contains($settingsPageContent, 'csrfField()')
+    && str_contains($settingsPageContent, 'id="simReceiptFooter"');
+
+// 2. Verifikasi Helper setSetting & getSetting untuk Pembaharuan Profil Usaha
+$origCompName = getSetting($pdo, 'company_name', 'Rengganis Net');
+$origAddress  = getSetting($pdo, 'company_address', 'Jl. Raya Rengganis No. 45, Sumber Malang');
+$origFooter   = getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti pembayaran yang sah.");
+
+$tempName    = 'Rengganis Net Digital Test';
+$tempAddress = 'Jl. Sakura No. 123, Sumber Malang';
+$tempFooter  = "Terima kasih pelanggan setia.\nStruk sah konfirmasi pembayaran WiFi.";
+
+$saveNameOk    = setSetting($pdo, 'company_name', $tempName);
+$saveAddressOk = setSetting($pdo, 'company_address', $tempAddress);
+$saveFooterOk  = setSetting($pdo, 'receipt_footer', $tempFooter);
+
+$readName    = getSetting($pdo, 'company_name');
+$readAddress = getSetting($pdo, 'company_address');
+$readFooter  = getSetting($pdo, 'receipt_footer');
+
+$settingsDbUpdateOk = $saveNameOk && $saveAddressOk && $saveFooterOk
+    && ($readName === $tempName)
+    && ($readAddress === $tempAddress)
+    && ($readFooter === $tempFooter);
+
+// 3. Verifikasi Propagasi Nilai Profil ke Format Kuitansi WhatsApp & Struk
+$sampleTestBill = [
+    'customer_name'  => 'Pelanggan Uji',
+    'customer_code'  => 'RNG-TEST',
+    'customer_phone' => '081234567800',
+    'bill_number'    => 'INV/202611/9999',
+    'period_month'   => 11,
+    'period_year'    => 2026,
+    'package_name'   => 'Paket Dedicated',
+    'package_speed'  => '50 Mbps',
+    'amount'         => 250000.00,
+    'payment_method' => 'Transfer BCA',
+    'collector_name' => 'Admin'
+];
+
+$testReceiptMsg = buildPaymentReceiptWhatsAppMessage($sampleTestBill, $pdo);
+$receiptPropagationOk = str_contains($testReceiptMsg, $tempName)
+    && str_contains($testReceiptMsg, 'Struk sah konfirmasi pembayaran WiFi');
+
+// 4. Kembalikan Pengaturan Semula (Restore)
+setSetting($pdo, 'company_name', $origCompName);
+setSetting($pdo, 'company_address', $origAddress);
+setSetting($pdo, 'receipt_footer', $origFooter);
+
+$t022Passed = $hasSettingsFormUi && $settingsDbUpdateOk && $receiptPropagationOk;
+assertTest("T-022/Setup/FR-06/FR-07: Form settings memperbarui nama perusahaan, alamat, teks footer struk thermal, & live simulator", $t022Passed);
+
 // Clean up test batch
 $pdo->exec("DELETE FROM bills WHERE period_month = {$testMonth} AND period_year = {$testYear}");
 echo "\nTest batch November 2026 dibersihkan.\n";

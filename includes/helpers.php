@@ -142,17 +142,39 @@ function e(?string $string): string {
     return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-// Get Setting
-function getSetting(PDO $pdo, string $key, string $default = ''): string {
+// Get Setting with optional cache-busting
+function getSetting(PDO $pdo, string $key, string $default = '', bool $forceReload = false): string {
     static $settingsCache = null;
-    if ($settingsCache === null) {
+    if ($settingsCache === null || $forceReload) {
         $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
         $settingsCache = [];
         while ($row = $stmt->fetch()) {
             $settingsCache[$row['setting_key']] = $row['setting_value'];
         }
     }
+    if ($key === '__RESET_CACHE__') {
+        return '';
+    }
     return $settingsCache[$key] ?? $default;
+}
+
+// Set / Update Setting (F5 / Setup / T-022)
+function setSetting(PDO $pdo, string $key, string $value): bool {
+    $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+    $res = $stmt->execute([$key, $value]);
+    getSetting($pdo, '__RESET_CACHE__', '', true);
+    return $res;
+}
+
+// Get All Settings as Key-Value array
+function getAllSettings(PDO $pdo, bool $forceReload = false): array {
+    getSetting($pdo, '__RESET_CACHE__', '', $forceReload);
+    $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+    $all = [];
+    while ($row = $stmt->fetch()) {
+        $all[$row['setting_key']] = $row['setting_value'];
+    }
+    return $all;
 }
 
 // Status Badges (Neo-Skeuomorphic with Glowing LEDs)

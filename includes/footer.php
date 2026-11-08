@@ -206,10 +206,14 @@
                         <span id="receiptCardAmount" class="font-black text-blue-700 text-lg font-mono tracking-tight">Rp 0</span>
                     </div>
 
-                    <!-- Footer Note -->
+                    <!-- Footer Note (T-022) -->
+                    <?php
+                    $activeFooterText = getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti transaksi resmi yang sah.");
+                    $footerLinesArr = array_values(array_filter(array_map('trim', explode("\n", $activeFooterText))));
+                    ?>
                     <div class="pt-2 text-center text-[10px] text-slate-400 border-t border-slate-100">
-                        <p id="receiptCardFooterText1" class="font-medium">Terima kasih atas pembayaran Anda.</p>
-                        <p id="receiptCardFooterText2" class="text-[9px] mt-0.5">Simpan struk ini sebagai bukti transaksi resmi yang sah.</p>
+                        <p id="receiptCardFooterText1" class="font-medium"><?= e($footerLinesArr[0] ?? 'Terima kasih atas pembayaran Anda.') ?></p>
+                        <p id="receiptCardFooterText2" class="text-[9px] mt-0.5"><?= e($footerLinesArr[1] ?? 'Simpan struk ini sebagai bukti transaksi resmi yang sah.') ?></p>
                     </div>
 
                 </div>
@@ -430,8 +434,9 @@
         </div>
         <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
         <div id="thermalReceiptFooter" style="text-align: center; font-size: 9px; margin-top: 4px;">
-            <div><?= e(getSetting($pdo, 'receipt_footer_line1', 'Terima kasih atas pembayaran Anda.')) ?></div>
-            <div><?= e(getSetting($pdo, 'receipt_footer_line2', 'Simpan struk ini sbg bukti sah.')) ?></div>
+            <?php foreach ($footerLinesArr as $fl): ?>
+                <div><?= e($fl) ?></div>
+            <?php endforeach; ?>
         </div>
         <div style="height: 15mm;"></div>
     </div>
