@@ -396,6 +396,48 @@ if ($unpaidId > 0) {
     assertTest("FR-05: Tagihan berhasil diproses lunas dengan timestamp & collector", $paidBill && $paidBill['status'] === 'lunas' && !empty($paidBill['payment_date']));
 }
 
+// TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
+$sampleBillT012 = [
+    'customer_name'  => 'Agus Prasetyo',
+    'customer_code'  => 'RNG-088',
+    'customer_phone' => '081234567899',
+    'bill_number'    => 'INV/202611/0088',
+    'period_month'   => $testMonth,
+    'period_year'    => $testYear,
+    'package_name'   => 'Paket Reguler 20 Mbps',
+    'package_speed'  => '20 Mbps',
+    'amount'         => 150000.00,
+    'due_date'       => "{$testYear}-11-10"
+];
+
+$waMsg = buildBillingWhatsAppMessage($sampleBillT012, $pdo);
+$waUrl = buildBillingWhatsAppUrl($sampleBillT012, $pdo);
+
+// Assertions for Acceptance Criteria:
+// 1. Rincian nama pelanggan, periode, nominal
+$hasDetails = str_contains($waMsg, 'Agus Prasetyo') 
+    && str_contains($waMsg, 'RNG-088')
+    && str_contains($waMsg, 'INV/202611/0088')
+    && str_contains($waMsg, getMonthName($testMonth) . " {$testYear}")
+    && str_contains($waMsg, 'Rp 150.000');
+
+// 2. Opsi 1: Pembayaran Online dengan kode QR / rekening transfer
+$hasOnlineOption = str_contains($waMsg, 'PEMBAYARAN ONLINE') 
+    && str_contains($waMsg, 'Kode QR') 
+    && str_contains($waMsg, 'transfer');
+
+// 3. Opsi 2: Pembayaran Offline dengan teks "siapkan uang tunai sejumlah tagihannya" / uang pas
+$hasOfflineOption = str_contains($waMsg, 'PEMBAYARAN OFFLINE') 
+    && str_contains($waMsg, 'siapkan uang tunai sejumlah tagihannya') 
+    && str_contains($waMsg, 'uang pas');
+
+// 4. Valid wa.me url with encoded message
+$hasValidWaUrl = str_starts_with($waUrl, 'https://wa.me/6281234567899?text=')
+    && (urldecode(substr($waUrl, strlen('https://wa.me/6281234567899?text='))) === $waMsg);
+
+$t012Passed = $hasDetails && $hasOnlineOption && $hasOfflineOption && $hasValidWaUrl;
+assertTest("T-012/F4/R2: Template pesan WhatsApp memuat rincian tagihan, opsi Online QR & instruksi Offline Tunai Pas", $t012Passed);
+
 // TEST 7.1: Fast Customer Search & Bill Status Filter Verification (T-011 / F2 / F3)
 // 1. Customer Search by Code & Name
 $stmtSearchCust = $pdo->prepare("

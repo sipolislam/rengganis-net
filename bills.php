@@ -340,21 +340,32 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
                                     <?php endif; ?>
                                 </td>
                                 <td class="py-3.5 px-5 text-right action-col">
-                                    <?php if (!$isPaid): ?>
-                                        <?php if (hasRole(['admin', 'kolektor'])): ?>
-                                        <button onclick='openPaymentModal(<?= $billJson ?>)' class="px-4 py-2 rounded-xl skeuo-btn-primary text-xs font-bold shadow-md flex items-center gap-1.5 ml-auto">
-                                            <i class="fa-solid fa-money-bill-wave"></i> Bayar
-                                        </button>
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <?php if (!$isPaid): ?>
+                                            <!-- WhatsApp Billing Notification Button (T-012 / F4 / R2) -->
+                                            <?php $waBillUrl = buildBillingWhatsAppUrl($bill, $pdo); ?>
+                                            <a href="<?= e($waBillUrl) ?>" target="_blank" 
+                                               class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+                                               title="Kirim Notifikasi Tagihan WA (Opsi Online QR & Offline Tunai Pas)">
+                                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                                                <span class="hidden md:inline">Kirim WA</span>
+                                            </a>
+
+                                            <?php if (hasRole(['admin', 'kolektor'])): ?>
+                                            <button onclick='openPaymentModal(<?= $billJson ?>)' class="px-3.5 py-2 rounded-xl skeuo-btn-primary text-xs font-bold shadow-md flex items-center gap-1.5">
+                                                <i class="fa-solid fa-money-bill-wave"></i> Bayar
+                                            </button>
+                                            <?php else: ?>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-400 bg-slate-100" title="Hanya Admin & Kolektor">
+                                                <i class="fa-solid fa-lock text-[9px]"></i> Kasir Only
+                                            </span>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-400 bg-slate-100 ml-auto" title="Hanya Admin & Kolektor">
-                                            <i class="fa-solid fa-lock text-[9px]"></i> Kasir Only
-                                        </span>
+                                            <button onclick='loadAndShowReceipt(<?= $bill['id'] ?>)' class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5 text-blue-700">
+                                                <i class="fa-solid fa-receipt text-blue-600"></i> Struk
+                                            </button>
                                         <?php endif; ?>
-                                    <?php else: ?>
-                                        <button onclick='loadAndShowReceipt(<?= $bill['id'] ?>)' class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5 ml-auto text-blue-700">
-                                            <i class="fa-solid fa-receipt text-blue-600"></i> Struk
-                                        </button>
-                                    <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

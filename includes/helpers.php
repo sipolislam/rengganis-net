@@ -492,3 +492,82 @@ function processBillPayment(PDO $pdo, int $billId, string $method, string $colle
 
     return $bill;
 }
+
+
+/**
+ * Generate formatted WhatsApp notification message for a bill (F4 / R2).
+ * Contains customer details, bill amount, period, due date, and structured dual-channel payment options:
+ * 1. Online payment via QR code / bank transfer
+ * 2. Offline payment with instruction to prepare exact cash ("siapkan uang tunai sejumlah tagihannya" / uang pas)
+ *
+ * @param array $bill Bill data (with customer and package details)
+ * @param PDO|null $pdo Database connection to load settings
+ * @return string Formatted plain text WhatsApp message
+ */
+function buildBillingWhatsAppMessage(array $bill, ?PDO $pdo = null): string {
+    if (!$pdo) {
+        $pdo = getDB();
+    }
+
+    $companyName = getSetting($pdo, 'company_name', 'Rengganis Net');
+    $companyTagline = getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat');
+    $companyPhone = getSetting($pdo, 'company_phone', '0812-3456-7890');
+    $bankInfo = getSetting($pdo, 'bank_info', "BCA: 123-456-7890 (a.n Rengganis Net)\nBRI: 0987-01-023456-50-1 (a.n Rengganis Net)\nDANA/Gopay: 0812-3456-7890");
+
+    $customerName = trim($bill['customer_name'] ?? $bill['name'] ?? 'Pelanggan');
+    $customerCode = trim($bill['customer_code'] ?? '-');
+    $billNumber = trim($bill['bill_number'] ?? '-');
+    $periodMonth = (int)($bill['period_month'] ?? date('n'));
+    $periodYear = (int)($bill['period_year'] ?? date('Y'));
+    $periodLabel = getMonthName($periodMonth) . ' ' . $periodYear;
+    $packageName = trim($bill['package_name'] ?? 'Paket WiFi');
+    $packageSpeed = trim($bill['package_speed'] ?? '');
+    $pkgFull = $packageSpeed ? "{$packageName} ({$packageSpeed})" : $packageName;
+    $amountFormatted = formatRupiah((float)($bill['amount'] ?? 0));
+    $dueDate = !empty($bill['due_date']) ? formatDate($bill['due_date']) : '-';
+
+    $msg = "*TAGIHAN INTERNET WIFI - {$companyName}*\n";
+    $msg .= "---------------------------------------------\n";
+    $msg .= "Yth. Pelanggan *{$customerName}* ({$customerCode}),\n\n";
+    $msg .= "Berikut rincian tagihan internet WiFi bulanan Anda:\n";
+    $msg .= "📄 No. Invoice : *{$billNumber}*\n";
+    $msg .= "📦 Paket : *{$pkgFull}*\n";
+    $msg .= "🗓️ Periode : *{$periodLabel}*\n";
+    $msg .= "💰 Total Tagihan : *{$amountFormatted}*\n";
+    $msg .= "⏰ Batas Jatuh Tempo : *{$dueDate}*\n\n";
+    $msg .= "*PILIHAN METODE PEMBAYARAN:*\n\n";
+    $bankLines = preg_split('/\r\n|\r|\n/', trim($bankInfo));
+    $bankIndented = implode("\n   ", array_map('trim', $bankLines));
+
+    $msg .= "1️⃣ *PEMBAYARAN ONLINE (KODE QR / TRANSFER):*\n";
+    $msg .= "   Silakan transfer ke rekening resmi atau scan kode QR:\n";
+    $msg .= "   " . $bankIndented . "\n";
+    $msg .= "   📲 Tautan Pembayaran / Kode QR: https://rengganis.net/pay?inv=" . urlencode($billNumber) . "\n";
+    $msg .= "   *(Mohon kirimkan foto/tangkapan layar bukti transfer setelah pembayaran)*\n\n";
+    $msg .= "2️⃣ *PEMBAYARAN OFFLINE (PETUGAS KOLEKTOR):*\n";
+    $msg .= "   Jika memilih offline, mohon siapkan uang tunai sejumlah tagihannya (*{$amountFormatted}*) dengan uang pas saat petugas kasir/kolektor kami berkunjung ke lokasi Anda.\n\n";
+    $msg .= "Terima kasih atas kerja samanya.\n";
+    $msg .= "_{$companyName} - {$companyTagline}_\n";
+    $msg .= "📞 Bantuan & Layanan: {$companyPhone}";
+
+    return $msg;
+}
+
+/**
+ * Generate full wa.me URL for billing notification (F4 / R2).
+ *
+ * @param array $bill Bill data (with customer phone)
+ * @param PDO|null $pdo Database connection
+ * @return string WhatsApp click-to-chat URL
+ */
+function buildBillingWhatsAppUrl(array $bill, ?PDO $pdo = null): string {
+    $phone = $bill['customer_phone'] ?? $bill['phone'] ?? '';
+    $waPhone = formatWhatsAppNumber($phone);
+    $message = buildBillingWhatsAppMessage($bill, $pdo);
+
+    if (empty($waPhone)) {
+        return '#';
+    }
+
+    return "https://wa.me/{$waPhone}?text=" . rawurlencode($message);
+}
