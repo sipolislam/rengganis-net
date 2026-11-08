@@ -217,6 +217,11 @@ function showReceiptModal(receiptData) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         
+        // Update Bluetooth status bar UI (T-017)
+        if (typeof updateBtStatusUI === 'function') {
+            updateBtStatusUI();
+        }
+
         // Auto-focus primary print button for keyboard accessibility
         setTimeout(() => {
             const printBtn = document.getElementById('btnPrintThermal');
@@ -260,42 +265,155 @@ function setReceiptPaperWidth(width) {
 }
 
 /**
- * Action: Cetak Thermal Bluetooth ESC/POS with Browser print fallback
+ * Update Bluetooth Connection Status in Modal UI (R3 / T-017)
+ */
+function updateBtStatusUI(statusOverride = null) {
+    const indicator = document.getElementById('btStatusIndicator');
+    const statusText = document.getElementById('btStatusText');
+    const reconnectBtn = document.getElementById('btnReconnectBluetooth');
+    if (!indicator || !statusText) return;
+
+    const status = statusOverride || (window.thermalPrinter ? window.thermalPrinter.getConnectionStatus() : { supported: false, connected: false, label: 'Tidak Didukung', deviceName: null });
+
+    if (!status.supported) {
+        indicator.className = 'led-pulse active-rose shrink-0';
+        indicator.title = 'Web Bluetooth tidak didukung browser ini';
+        statusText.textContent = 'Bluetooth Tidak Didukung';
+        statusText.className = 'text-xs font-bold text-rose-600 truncate block';
+        if (reconnectBtn) reconnectBtn.classList.add('hidden');
+        return;
+    }
+
+    if (reconnectBtn) reconnectBtn.classList.remove('hidden');
+
+    if (status.connected) {
+        indicator.className = 'led-pulse active-green shrink-0';
+        indicator.title = 'Terhubung ke ' + (status.deviceName || 'Printer');
+        statusText.textContent = 'Terhubung: ' + (status.deviceName || 'Printer Bluetooth');
+        statusText.className = 'text-xs font-bold text-emerald-700 truncate block';
+    } else {
+        indicator.className = 'led-pulse active-amber shrink-0';
+        indicator.title = 'Bluetooth Terputus / Belum Tersambung';
+        statusText.textContent = status.deviceName ? `Terputus (${status.deviceName})` : 'Siaga / Belum Tersambung';
+        statusText.className = 'text-xs font-bold text-slate-600 truncate block';
+    }
+}
+
+/**
+ * Action: Sambung Ulang / Reconnect Printer Bluetooth (R3 / T-017)
+ */
+async function handleReconnectBluetooth() {
+    if (!window.thermalPrinter) {
+        showToast('Driver printer belum dimuat.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnReconnectBluetooth');
+    const originalContent = btn ? btn.innerHTML : '';
+    const statusText = document.getElementById('btStatusText');
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-arrows-rotate animate-spin text-[11px]"></i> <span>Menyambung...</span>`;
+        }
+        if (statusText) {
+            statusText.textContent = 'Mencari printer Bluetooth...';
+            statusText.className = 'text-xs font-bold text-blue-600 truncate block';
+        }
+
+        await window.thermalPrinter.reconnect();
+        updateBtStatusUI();
+        showToast('Printer Bluetooth berhasil disambungkan!', 'success');
+    } catch (err) {
+        console.warn('Gagal reconnect printer Bluetooth:', err);
+        updateBtStatusUI();
+        showToast('Gagal menyambung printer: ' + (err.message || 'Perangkat tidak merespons. Pastikan printer hidup.'), 'warning');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    }
+}
+
+/**
+ * Action: Fallback Cetak Dialog Browser (@media print 58mm / 80mm) (R3 / T-017)
+ */
+function handlePrintBrowserFallback() {
+    if (!window.currentReceiptData) {
+        showToast('Data struk tidak ditemukan.', 'warning');
+        return;
+    }
+
+    const currentWidth = window.thermalPrinter ? (window.thermalPrinter.paperWidth || 58) : 58;
+    
+    // Apply width class to thermal print area
+    const printArea = document.getElementById('thermalReceiptPrintArea');
+    if (printArea) {
+        if (parseInt(currentWidth, 10) === 80) {
+            printArea.classList.add('paper-80mm');
+            printArea.classList.remove('paper-58mm');
+        } else {
+            printArea.classList.remove('paper-80mm');
+            printArea.classList.add('paper-58mm');
+        }
+    }
+
+    showToast(`Membuka dialog cetak browser (${currentWidth}mm)...`, 'info');
+    
+    if (window.thermalPrinter && typeof window.thermalPrinter.printBrowser === 'function') {
+        window.thermalPrinter.printBrowser(currentWidth);
+    } else {
+        window.print();
+    }
+}
+
+/**
+ * Action: Cetak Thermal Bluetooth ESC/POS with Graceful Fallback (R3 / T-017)
  */
 async function handlePrintThermal() {
     if (!window.currentReceiptData) return;
     const btn = document.getElementById('btnPrintThermal');
-    const originalText = btn.innerHTML;
+    const originalText = btn ? btn.innerHTML : '';
 
     try {
-        btn.disabled = true;
-        btn.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg> Menghubungkan Bluetooth...
-        `;
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg> Mencetak...
+            `;
+        }
 
-        if (window.thermalPrinter.isSupported()) {
+        if (window.thermalPrinter && window.thermalPrinter.isSupported()) {
             try {
                 await window.thermalPrinter.printEscPos(window.currentReceiptData);
+                updateBtStatusUI();
                 showToast('Struk berhasil dicetak ke printer Bluetooth thermal!');
             } catch (btErr) {
-                console.warn('Bluetooth printer direct failed or cancelled:', btErr);
-                // Fallback to browser print dialog
-                showToast('Membuka dialog cetak browser (58mm)...', 'info');
-                window.print();
+                console.warn('Bluetooth printer direct print failed or cancelled:', btErr);
+                updateBtStatusUI();
+                showToast('Koneksi printer Bluetooth gagal atau dibatalkan. Mengalihkan ke Cetak Browser...', 'warning');
+                // Graceful fallback to browser print dialog without crashing/hanging (R3)
+                handlePrintBrowserFallback();
             }
         } else {
-            // Direct print fallback
-            showToast('Web Bluetooth tidak tersedia di browser ini. Membuka print dialog...', 'info');
-            window.print();
+            // Direct print fallback for unsupported browsers
+            showToast('Web Bluetooth tidak tersedia. Mengalihkan ke Cetak Browser...', 'info');
+            handlePrintBrowserFallback();
         }
     } catch (e) {
+        console.error('Fatal print error:', e);
         showToast('Gagal mencetak: ' + e.message, 'error');
+        handlePrintBrowserFallback();
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
 }
 
@@ -412,6 +530,17 @@ document.addEventListener('DOMContentLoaded', () => {
             btn58.className = 'px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all';
         }
     } catch (e) {}
+
+    // Bluetooth printer event listeners & status sync (T-017)
+    if (window.thermalPrinter) {
+        window.thermalPrinter.onConnectedCallback = () => {
+            if (typeof updateBtStatusUI === 'function') updateBtStatusUI();
+        };
+        window.thermalPrinter.onDisconnectedCallback = () => {
+            if (typeof updateBtStatusUI === 'function') updateBtStatusUI();
+        };
+        if (typeof updateBtStatusUI === 'function') updateBtStatusUI();
+    }
 
     // Keyboard accessibility: ESC key to close active modals
     document.addEventListener('keydown', (e) => {

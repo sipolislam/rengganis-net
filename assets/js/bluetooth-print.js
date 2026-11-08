@@ -124,7 +124,7 @@ class BluetoothEscPosPrinter {
             });
 
             console.log('Menghubungkan ke GATT Server...');
-            this.server = await this.device.gatt.connect();
+            this.server = await this.withTimeout(this.device.gatt.connect(), 10000, 'Koneksi ke GATT Server printer timeout (10 detik)');
 
             // Search through possible printer services
             let foundCharacteristic = null;
@@ -185,6 +185,113 @@ class BluetoothEscPosPrinter {
         } finally {
             this.isConnecting = false;
         }
+    }
+
+    /**
+     * Promise timeout wrapper to prevent indefinite hanging (R3)
+     */
+    async withTimeout(promise, ms = 10000, errorMsg = 'Waktu koneksi Bluetooth habis') {
+        let timer;
+        const timeoutPromise = new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error(errorMsg)), ms);
+        });
+        try {
+            return await Promise.race([promise, timeoutPromise]);
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    /**
+     * Reconnect to previously paired Bluetooth printer (R3 / T-017)
+     * If previous device exists, attempts fast direct reconnection; falls back to connect() dialog.
+     */
+    async reconnect() {
+        if (!this.isSupported()) {
+            throw new Error('Web Bluetooth tidak didukung pada browser ini.');
+        }
+
+        if (this.isConnected && this.characteristic) {
+            return true;
+        }
+
+        if (this.device && this.device.gatt) {
+            try {
+                console.log('Mencoba menyambung ulang ke printer:', this.device.name || 'Bluetooth Printer');
+                this.server = await this.withTimeout(this.device.gatt.connect(), 8000, 'Koneksi ulang Bluetooth timeout');
+
+                // Re-discover characteristics
+                let foundCharacteristic = null;
+                const services = this.getPrinterServices();
+                for (const sUuid of services) {
+                    try {
+                        const service = await this.server.getPrimaryService(sUuid);
+                        const chars = await service.getCharacteristics();
+                        for (const c of chars) {
+                            if (c.properties.write || c.properties.writeWithoutResponse) {
+                                foundCharacteristic = c;
+                                break;
+                            }
+                        }
+                        if (foundCharacteristic) break;
+                    } catch (e) {}
+                }
+
+                if (!foundCharacteristic) {
+                    try {
+                        const allServices = await this.server.getPrimaryServices();
+                        for (const s of allServices) {
+                            const chars = await s.getCharacteristics();
+                            for (const c of chars) {
+                                if (c.properties.write || c.properties.writeWithoutResponse) {
+                                    foundCharacteristic = c;
+                                    break;
+                                }
+                            }
+                            if (foundCharacteristic) break;
+                        }
+                    } catch (e) {}
+                }
+
+                if (foundCharacteristic) {
+                    this.characteristic = foundCharacteristic;
+                    this.isConnected = true;
+                    console.log('Reconnect Bluetooth berhasil!');
+                    if (typeof this.onConnectedCallback === 'function') {
+                        this.onConnectedCallback(this.device);
+                    }
+                    return true;
+                }
+            } catch (reconnectErr) {
+                console.warn('Reconnect otomatis gagal, beralih ke dialog connect:', reconnectErr);
+            }
+        }
+
+        // Fallback to requestDevice connect
+        return await this.connect();
+    }
+
+    /**
+     * Get real-time printer connection state (R3 / T-017)
+     */
+    getConnectionStatus() {
+        if (!this.isSupported()) {
+            return { supported: false, connected: false, label: 'Bluetooth Tidak Didukung', deviceName: null };
+        }
+        if (this.isConnected && this.characteristic) {
+            return {
+                supported: true,
+                connected: true,
+                label: 'Terhubung',
+                deviceName: (this.device && this.device.name) ? this.device.name : 'Printer Bluetooth'
+            };
+        }
+        return {
+            supported: true,
+            connected: false,
+            label: 'Terputus',
+            deviceName: (this.device && this.device.name) ? this.device.name : null
+        };
     }
 
     /**
@@ -391,12 +498,27 @@ class BluetoothEscPosPrinter {
     }
 
     /**
-     * Fallback standard print dialog for 58mm thermal
+     * Fallback standard print dialog for 58mm / 80mm thermal rolls (R3 / T-017)
      */
-    printBrowser() {
-        if (typeof window !== 'undefined' && typeof window.print === 'function') {
-            window.print();
+    printBrowser(paperWidth = null) {
+        if (typeof window === 'undefined' || typeof window.print !== 'function') {
+            return false;
         }
+
+        const width = parseInt(paperWidth || this.paperWidth || 58, 10);
+        const printArea = document.getElementById('thermalReceiptPrintArea');
+        if (printArea) {
+            if (width === 80) {
+                printArea.classList.add('paper-80mm');
+                printArea.classList.remove('paper-58mm');
+            } else {
+                printArea.classList.remove('paper-80mm');
+                printArea.classList.add('paper-58mm');
+            }
+        }
+
+        window.print();
+        return true;
     }
 }
 

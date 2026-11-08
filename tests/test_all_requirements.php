@@ -593,6 +593,106 @@ $escposBufferOk = ($nodeOutput === 'ESCPOS_OK');
 $t016Passed = $hasBtDriverClass && $hasWidthControls && $escposBufferOk;
 assertTest("T-016/F5: Driver Web Bluetooth API & buffer byte ESC/POS printer thermal 58mm/80mm", $t016Passed);
 
+// TEST 7.4: Fallback Cetak Browser & Reconnect Printer Bluetooth (T-017 / F5 / R3)
+$customCssContent = file_get_contents(__DIR__ . '/../assets/css/custom.css');
+
+// 1. Verifikasi Driver Bluetooth (assets/js/bluetooth-print.js)
+$hasBtDriverFallback = str_contains($btDriverContent, 'reconnect()')
+    && str_contains($btDriverContent, 'withTimeout(')
+    && str_contains($btDriverContent, 'getConnectionStatus()')
+    && str_contains($btDriverContent, 'printBrowser(');
+
+// 2. Verifikasi CSS Print (@media print & multi paper width)
+$hasPrintCss = str_contains($customCssContent, '@media print')
+    && str_contains($customCssContent, '#thermalReceiptPrintArea')
+    && str_contains($customCssContent, 'paper-80mm');
+
+// 3. Verifikasi UI Reconnect & Fallback Print (includes/footer.php)
+$hasFooterFallbackUi = str_contains($footerContent, 'id="btStatusBar"')
+    && str_contains($footerContent, 'id="btStatusIndicator"')
+    && str_contains($footerContent, 'id="btStatusText"')
+    && str_contains($footerContent, 'id="btnReconnectBluetooth"')
+    && str_contains($footerContent, 'handleReconnectBluetooth()')
+    && str_contains($footerContent, 'id="btnPrintBrowser"')
+    && str_contains($footerContent, 'handlePrintBrowserFallback()');
+
+// 4. Verifikasi Frontend App Logic (assets/js/app.js)
+$hasAppJsLogic = str_contains($appJsContent, 'function updateBtStatusUI(')
+    && str_contains($appJsContent, 'function handleReconnectBluetooth(')
+    && str_contains($appJsContent, 'function handlePrintBrowserFallback(')
+    && str_contains($appJsContent, 'handlePrintThermal');
+
+// 5. Verifikasi Eksekusi Logic Node.js untuk Reconnect, Timeout Protection, & Fallback
+$nodeFallbackScript = __DIR__ . '/temp_test_t017_fallback.js';
+$nodeFallbackCode = <<<'NODE_EOF'
+const path = require('path');
+if (typeof navigator !== 'undefined') {
+    Object.defineProperty(navigator, 'bluetooth', { value: {}, configurable: true, writable: true });
+} else {
+    global.navigator = { bluetooth: {} };
+}
+
+const { BluetoothEscPosPrinter } = require(path.resolve(__dirname, '../assets/js/bluetooth-print.js'));
+const printer = new BluetoothEscPosPrinter();
+
+(async () => {
+    try {
+        // Test 1: Timeout Protection Wrapper
+        let timeoutTriggered = false;
+        try {
+            await printer.withTimeout(new Promise(r => setTimeout(r, 200)), 50, 'Timeout Test');
+        } catch (e) {
+            timeoutTriggered = (e.message === 'Timeout Test');
+        }
+
+        // Test 2: Connection Status Disconnected
+        const statusDisconnected = printer.getConnectionStatus();
+        const disconnectedOk = (statusDisconnected.supported === true && statusDisconnected.connected === false);
+
+        // Test 3: Reconnect with Mock GATT Device
+        let gattConnectCalled = false;
+        printer.device = {
+            name: 'Panda-PRJ58',
+            gatt: {
+                connect: async () => {
+                    gattConnectCalled = true;
+                    return {
+                        getPrimaryService: async () => ({
+                            getCharacteristics: async () => [{ properties: { write: true } }]
+                        })
+                    };
+                }
+            }
+        };
+
+        const reconnectSuccess = await printer.reconnect();
+        const statusConnected = printer.getConnectionStatus();
+        const connectedOk = (reconnectSuccess === true && statusConnected.connected === true && statusConnected.deviceName === 'Panda-PRJ58');
+
+        // Test 4: printBrowser callable
+        const printBrowserCallable = (typeof printer.printBrowser === 'function');
+
+        if (timeoutTriggered && disconnectedOk && gattConnectCalled && connectedOk && printBrowserCallable) {
+            process.stdout.write("T017_RECONNECT_FALLBACK_OK");
+        } else {
+            process.stdout.write("T017_FAIL: " + JSON.stringify({ timeoutTriggered, disconnectedOk, gattConnectCalled, connectedOk, printBrowserCallable }));
+        }
+    } catch (err) {
+        process.stdout.write("T017_ERROR: " + err.message);
+    }
+})();
+NODE_EOF;
+
+file_put_contents($nodeFallbackScript, $nodeFallbackCode);
+$nodeFallbackOutput = shell_exec('node ' . escapeshellarg($nodeFallbackScript));
+if (file_exists($nodeFallbackScript)) {
+    unlink($nodeFallbackScript);
+}
+$nodeFallbackOk = str_contains($nodeFallbackOutput, 'T017_RECONNECT_FALLBACK_OK');
+
+$t017Passed = $hasBtDriverFallback && $hasPrintCss && $hasFooterFallbackUi && $hasAppJsLogic && $nodeFallbackOk;
+assertTest("T-017/F5/R3: Fallback cetak browser (@media print 58mm/80mm), reconnect Bluetooth, & proteksi hang", $t017Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',
