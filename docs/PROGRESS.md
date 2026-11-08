@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-024` telah diselesaikan pada branch `test/T-024-field-mobile-testing`. Antarmuka aplikasi Rengganis Net telah disempurnakan dan diuji untuk operasional lapangan petugas penagih di smartphone Android di bawah terik sinar matahari: penyediaan tampilan dwimode (*Desktop Table* dan *Mobile Field Cards*) pada modul Tagihan `bills.php` dan Pelanggan `customers.php`, kartu tagihan mobile lengkap dengan nomor invoice, status badge, tombol aksi sekali-sentuh dengan target sentuh nyaman (min 44px) untuk kirim WhatsApp dan bayar tagihan, pembaruan baris kartu mobile secara realtime saat konfirmasi pembayaran berhasil, meta tag PWA Android (`theme-color`, `mobile-web-app-capable`, `100dvh`), kelas kontras tinggi outdoor pada `custom.css`, safe-area inset untuk ponsel Android/iOS modern, serta uji reliabilitas pencetakan Bluetooth ESC/POS lapangan dengan fallback otomatis ke cetak browser dan unduh PNG. Seluruh 36 sub-pengujian di `tests/test_all_requirements.php` lulus 100% (36/36 PASS) dan seluruh 12 kelompok kriteria kebutuhan terpenuhi 100% (12/12 PASS). Validasi kit `kit/tools/validate.py` bersih (21 PASS, 0 FAIL, 0 WARN). Repositori siap melanjutkan ke task `T-025` (Penyempurnaan dokumentasi repositori README).
+Task `T-025` telah diselesaikan pada branch `docs/T-025-readme-documentation`. Dokumentasi utama repositori `README.md` telah disempurnakan secara komprehensif mencakup seluruh 12 bagian wajib kit dokumen capstone: pengenalan sistem Rengganis Net (manajemen operasional, penagihan bulanan bebas tagihan fiktif cuti, dan cetak struk Bluetooth ESC/POS), status realisasi 6 fitur utama (F1–F6) beserta 3 kendali risiko mutlak (R1–R3) yang berstatus 100% selesai dan terverifikasi, tumpukan teknologi modern tanpa dependensi berat (PHP 8.4, MySQL 8.0, Tailwind CSS, Web Bluetooth ESC/POS, Laragon), panduan langkah instalasi lengkap dengan default credentials pengguna (Admin, Kolektor/Kasir, Teknisi Lapangan), tabel perintah resmi pengujian identik, struktur direktori 2 tingkat, tabel tautan dokumen proyek, kontribusi kode, pengungkapan AI, dan status rilis operasional. Seluruh 36 sub-pengujian di `tests/test_all_requirements.php` lulus 100% (36/36 PASS), 12 kelompok kriteria kebutuhan PRD terpenuhi 100% (12/12 PASS), dan validasi kit `kit/tools/validate.py` bersih tanpa peringatan (21 PASS, 0 FAIL, 0 WARN). Repositori siap melanjutkan ke task penutup `T-026` (Refleksi akhir dan catatan pembelajaran).
 
 ## Completed
 
@@ -37,15 +37,15 @@ Task `T-024` telah diselesaikan pada branch `test/T-024-field-mobile-testing`. A
 | 2026-11-08 | `T-022`: Pengaturan profil usaha dan catatan kaki struk | branch `feat/T-022-company-settings` | Form identitas usaha, due date, rekening bank, footer struk thermal, live simulator 58mm, dan 35 test lolos |
 | 2026-11-08 | `T-023`: Skrip pengujian otomatis 12 kriteria kebutuhan | branch `test/T-023-automated-test-suite` | Restrukturisasi test_all_requirements.php ke 12 kelompok kriteria kebutuhan PRD/EVALS, proteksi try/finally, exit code CLI, 12/12 kriteria lolos (100% PASS), 35/35 sub-tes lolos |
 | 2026-11-08 | `T-024`: Uji operasional lapangan dan responsivitas mobile | branch `test/T-024-field-mobile-testing` | Kartu tampilan mobile bills.php & customers.php, touch target >=44px, meta PWA theme-color, safe-area inset, kontras outdoor, dan 36 test lolos |
+| 2026-11-08 | `T-025`: Penyempurnaan dokumentasi repositori README | branch `docs/T-025-readme-documentation` | Pembaruan menyeluruh README.md mencakup 12 bagian wajib kit, status realisasi F1–F6, kendali risiko R1–R3, tech stack, default accounts, perintah pengujian, dan struktur proyek |
 
 ## In Progress
 
-Tidak ada (siap melanjutkan ke task `T-025`)
+Tidak ada (siap melanjutkan ke task `T-026`)
 
 ## Next Up
 
-1. `T-025`: Penyempurnaan dokumentasi repositori README
-2. `T-026`: Refleksi akhir dan catatan pembelajaran
+1. `T-026`: Refleksi akhir dan catatan pembelajaran (`docs/REVIEW.md` dan `docs/LESSONS.md`)
 
 ## Blockers
 
