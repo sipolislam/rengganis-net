@@ -772,6 +772,67 @@ $nodePngOk = str_contains($nodePngOutput, 'T018_PNG_RENDER_OK');
 $t018Passed = $hasHtml2CanvasLib && $hasPngDownloadUi && $hasPngExportFunctions && $nodePngOk;
 assertTest("T-018/F5: Render struk digital ke format gambar PNG tajam (html2canvas & Canvas 2D engine)", $t018Passed);
 
+// TEST 8.1: Dasbor Analitik Omzet & Collection Rate (T-019 / F6)
+$indexContent = file_get_contents(__DIR__ . '/../index.php');
+$apiDashboardContent = file_get_contents(__DIR__ . '/../api/dashboard.php');
+
+// 1. Verifikasi Antarmuka Dasbor index.php
+$hasDashboardKpiUi = str_contains($indexContent, 'id="kpiTotalIncome"')
+    && str_contains($indexContent, 'id="kpiTotalUnpaid"')
+    && str_contains($indexContent, 'id="kpiCollectionRate"')
+    && str_contains($indexContent, 'id="paymentMethodsBreakdown"')
+    && str_contains($indexContent, 'id="collectorPerformanceBreakdown"')
+    && str_contains($indexContent, 'name="month"')
+    && str_contains($indexContent, 'name="year"');
+
+// 2. Verifikasi Endpoint API api/dashboard.php
+$hasDashboardApi = str_contains($apiDashboardContent, 'total_income')
+    && str_contains($apiDashboardContent, 'collection_rate')
+    && str_contains($apiDashboardContent, 'payment_methods')
+    && str_contains($apiDashboardContent, 'count_transactions');
+
+// 3. Verifikasi Keakuratan Perhitungan Analitik Database (Periode Uji)
+$stmtDashTest = $pdo->prepare("
+    SELECT 
+        COUNT(*) AS total_bills,
+        SUM(CASE WHEN status = 'lunas' THEN amount ELSE 0 END) AS total_income,
+        SUM(CASE WHEN status = 'lunas' THEN 1 ELSE 0 END) AS count_paid,
+        SUM(CASE WHEN status = 'belum_lunas' THEN amount ELSE 0 END) AS total_unpaid,
+        SUM(CASE WHEN status = 'belum_lunas' THEN 1 ELSE 0 END) AS count_unpaid
+    FROM bills
+    WHERE period_month = ? AND period_year = ?
+");
+$stmtDashTest->execute([$testMonth, $testYear]);
+$dashStats = $stmtDashTest->fetch();
+
+$calcIncome = (float)($dashStats['total_income'] ?? 0);
+$calcPaid = (int)($dashStats['count_paid'] ?? 0);
+$calcTotalBills = (int)($dashStats['total_bills'] ?? 0);
+$expectedRate = $calcTotalBills > 0 ? round(($calcPaid / $calcTotalBills) * 100, 1) : 0;
+
+// 4. Verifikasi Agregasi Metode Pembayaran (Tunai & Transfer)
+$stmtMethodsTest = $pdo->prepare("
+    SELECT 
+        COALESCE(NULLIF(TRIM(payment_method), ''), 'Tunai') AS method_name,
+        COUNT(*) AS count_transactions,
+        SUM(amount) AS total_amount
+    FROM bills
+    WHERE status = 'lunas' AND period_month = ? AND period_year = ?
+    GROUP BY COALESCE(NULLIF(TRIM(payment_method), ''), 'Tunai')
+");
+$stmtMethodsTest->execute([$testMonth, $testYear]);
+$methodsData = $stmtMethodsTest->fetchAll();
+
+$methodsAggregatedOk = !empty($methodsData);
+$totalMethodAmount = 0;
+foreach ($methodsData as $md) {
+    $totalMethodAmount += (float)$md['total_amount'];
+}
+$methodsMathOk = ($totalMethodAmount == $calcIncome) && ($expectedRate > 0);
+
+$t019Passed = $hasDashboardKpiUi && $hasDashboardApi && $methodsAggregatedOk && $methodsMathOk;
+assertTest("T-019/F6: Dasbor analitik omzet, persentase tertagih (collection rate), & ringkasan metode pembayaran", $t019Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',
