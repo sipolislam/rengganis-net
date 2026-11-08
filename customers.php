@@ -162,9 +162,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch Packages
 $packages = $pdo->query("SELECT * FROM packages WHERE is_active = 1 ORDER BY price ASC")->fetchAll();
 
-// Filters & Search
+// Filters & Search (T-011)
 $filterStatus = $_GET['status'] ?? 'all';
+$filterPackage = (int)($_GET['package_id'] ?? 0);
 $search = trim($_GET['search'] ?? '');
+$isFiltered = ($filterStatus !== 'all' || !empty($search) || $filterPackage > 0);
+
+// Helper for building filter URLs preserving other active params
+$buildCustomerUrl = function($overrides = []) use ($filterStatus, $filterPackage, $search) {
+    $params = [
+        'status'     => $filterStatus,
+        'package_id' => $filterPackage,
+        'search'     => $search
+    ];
+    $merged = array_merge($params, $overrides);
+    if ($merged['status'] === 'all') unset($merged['status']);
+    if (empty($merged['package_id'])) unset($merged['package_id']);
+    if (empty($merged['search'])) unset($merged['search']);
+    return empty($merged) ? 'customers.php' : 'customers.php?' . http_build_query($merged);
+};
 
 $sql = "
     SELECT c.*, p.name AS package_name, p.speed AS package_speed, p.price AS package_price
@@ -179,9 +195,20 @@ if ($filterStatus !== 'all' && in_array($filterStatus, ['aktif', 'cuti', 'isolir
     $params[':status'] = $filterStatus;
 }
 
+if ($filterPackage > 0) {
+    $sql .= " AND c.package_id = :package_id";
+    $params[':package_id'] = $filterPackage;
+}
+
 if (!empty($search)) {
-    $sql .= " AND (c.name LIKE :q OR c.customer_code LIKE :q OR c.phone LIKE :q OR c.address LIKE :q OR c.ip_address LIKE :q)";
-    $params[':q'] = "%{$search}%";
+    // Unique named params for native PDO statement safety
+    $sql .= " AND (c.name LIKE :q1 OR c.customer_code LIKE :q2 OR c.phone LIKE :q3 OR c.address LIKE :q4 OR c.ip_address LIKE :q5)";
+    $term = "%{$search}%";
+    $params[':q1'] = $term;
+    $params[':q2'] = $term;
+    $params[':q3'] = $term;
+    $params[':q4'] = $term;
+    $params[':q5'] = $term;
 }
 
 $sql .= " ORDER BY c.customer_code ASC";
@@ -216,43 +243,79 @@ $countTabs = $pdo->query("
         <?php endif; ?>
     </div>
 
-    <!-- Filter Pills & Search Panel (Neumorphic Surface) -->
-    <div class="neu-flat rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Filter Pills & Search Panel (Neumorphic Surface - T-011) -->
+    <div class="neu-flat rounded-3xl p-4 sm:p-5 flex flex-col gap-4">
         
-        <!-- Status Filter Pills -->
-        <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
-            <a href="customers.php<?= !empty($search) ? '?search=' . urlencode($search) : '' ?>" class="px-4 py-2 rounded-xl transition-all <?= $filterStatus === 'all' ? 'skeuo-btn-dark' : 'skeuo-btn-secondary text-slate-600' ?>">
-                Semua (<?= (int)$countTabs['total'] ?>)
-            </a>
-            <a href="customers.php?status=aktif<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" class="px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'aktif' ? 'skeuo-btn-emerald' : 'skeuo-btn-secondary text-emerald-700' ?>">
-                <span class="led-pulse active-green"></span> Aktif (<?= (int)$countTabs['total_aktif'] ?>)
-            </a>
-            <a href="customers.php?status=cuti<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" class="px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'cuti' ? 'bg-amber-500 text-white shadow-md' : 'skeuo-btn-secondary text-amber-700' ?>" title="Pelanggan cuti tidak diterbitkan tagihan (FR-03)">
-                <span class="led-pulse active-amber"></span> Cuti / Libur (<?= (int)$countTabs['total_cuti'] ?>)
-            </a>
-            <a href="customers.php?status=isolir<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" class="px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'isolir' ? 'bg-rose-600 text-white shadow-md' : 'skeuo-btn-secondary text-rose-700' ?>">
-                <span class="led-pulse active-rose"></span> Isolir (<?= (int)$countTabs['total_isolir'] ?>)
-            </a>
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <!-- Status Filter Pills -->
+            <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+                <a href="<?= e($buildCustomerUrl(['status' => 'all'])) ?>" class="px-4 py-2 rounded-xl transition-all <?= $filterStatus === 'all' ? 'skeuo-btn-dark' : 'skeuo-btn-secondary text-slate-600' ?>">
+                    Semua (<?= (int)$countTabs['total'] ?>)
+                </a>
+                <a href="<?= e($buildCustomerUrl(['status' => 'aktif'])) ?>" class="px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'aktif' ? 'skeuo-btn-emerald' : 'skeuo-btn-secondary text-emerald-700' ?>">
+                    <span class="led-pulse active-green"></span> Aktif (<?= (int)$countTabs['total_aktif'] ?>)
+                </a>
+                <a href="<?= e($buildCustomerUrl(['status' => 'cuti'])) ?>" class="px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'cuti' ? 'bg-amber-500 text-white shadow-md' : 'skeuo-btn-secondary text-amber-700' ?>" title="Pelanggan cuti tidak diterbitkan tagihan (FR-03)">
+                    <span class="led-pulse active-amber"></span> Cuti / Libur (<?= (int)$countTabs['total_cuti'] ?>)
+                </a>
+                <a href="<?= e($buildCustomerUrl(['status' => 'isolir'])) ?>" class="px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'isolir' ? 'bg-rose-600 text-white shadow-md' : 'skeuo-btn-secondary text-rose-700' ?>">
+                    <span class="led-pulse active-rose"></span> Isolir (<?= (int)$countTabs['total_isolir'] ?>)
+                </a>
+            </div>
+
+            <!-- Search & Package Filter with Neumorphic Inset -->
+            <form action="customers.php" method="GET" class="flex flex-wrap items-center gap-2">
+                <?php if ($filterStatus !== 'all'): ?>
+                    <input type="hidden" name="status" value="<?= e($filterStatus) ?>">
+                <?php endif; ?>
+
+                <!-- Package Dropdown Filter -->
+                <select name="package_id" onchange="this.form.submit()" class="neu-input px-3 py-2 rounded-xl text-xs font-bold text-slate-700">
+                    <option value="0">Semua Paket Layanan</option>
+                    <?php foreach ($packages as $pkg): ?>
+                        <option value="<?= $pkg['id'] ?>" <?= $filterPackage === (int)$pkg['id'] ? 'selected' : '' ?>>
+                            <?= e($pkg['name']) ?> (<?= e($pkg['speed']) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-56">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" name="search" value="<?= e($search) ?>" placeholder="Cari nama, IP, kode..." class="neu-input w-full pl-8 pr-3 py-2 rounded-xl text-xs font-semibold">
+                </div>
+
+                <button type="submit" class="px-4 py-2 skeuo-btn-dark rounded-xl text-xs font-bold">
+                    Cari
+                </button>
+
+                <?php if ($isFiltered): ?>
+                    <a href="customers.php" class="px-3.5 py-2 rounded-xl text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 font-bold transition-all flex items-center gap-1.5 text-xs shadow-sm" title="Reset seluruh filter dan pencarian">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+                    </a>
+                <?php endif; ?>
+            </form>
         </div>
 
-        <!-- Search Input with Neumorphic Inset -->
-        <form action="customers.php" method="GET" class="flex items-center gap-2">
-            <?php if ($filterStatus !== 'all'): ?>
-                <input type="hidden" name="status" value="<?= e($filterStatus) ?>">
-            <?php endif; ?>
-            <div class="relative w-full sm:w-64">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                </span>
-                <input type="text" name="search" value="<?= e($search) ?>" placeholder="Cari nama, IP, kode..." class="neu-input w-full pl-8 pr-3 py-2 rounded-xl text-xs font-semibold">
+        <!-- Filter / Results Counter Summary Bar -->
+        <div class="pt-2 border-t border-slate-200/60 flex flex-wrap items-center justify-between text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-800">Menampilkan <?= count($customers) ?> dari <?= (int)$countTabs['total'] ?> pelanggan</span>
+                <?php if ($isFiltered): ?>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                        <i class="fa-solid fa-filter text-[9px]"></i> Filter Aktif:
+                        <?= $filterStatus !== 'all' ? 'Status ' . ucfirst($filterStatus) : '' ?>
+                        <?= $filterPackage > 0 ? ($filterStatus !== 'all' ? ' | ' : '') . 'Paket ID #' . $filterPackage : '' ?>
+                        <?= !empty($search) ? (($filterStatus !== 'all' || $filterPackage > 0) ? ' | ' : '') . '"' . e($search) . '"' : '' ?>
+                    </span>
+                <?php endif; ?>
             </div>
-            <button type="submit" class="px-4 py-2 skeuo-btn-dark rounded-xl text-xs font-bold">
-                Cari
-            </button>
-            <?php if (!empty($search)): ?>
-                <a href="customers.php?status=<?= e($filterStatus) ?>" class="text-xs text-rose-600 font-bold hover:underline">Reset</a>
+            <?php if ($isFiltered): ?>
+                <span class="text-[11px] text-slate-400">Hasil filter instan</span>
             <?php endif; ?>
-        </form>
+        </div>
 
     </div>
 
@@ -261,9 +324,20 @@ $countTabs = $pdo->query("
         
         <?php if (empty($customers)): ?>
             <div class="p-12 text-center text-slate-400">
-                <i class="fa-solid fa-users-slash text-4xl mb-3 opacity-30"></i>
+                <div class="w-14 h-14 rounded-2xl neu-inset mx-auto flex items-center justify-center text-rose-500 mb-3 shadow-inner">
+                    <i class="fa-solid fa-magnifying-glass-chart text-2xl"></i>
+                </div>
                 <p class="text-sm font-bold text-slate-800">Tidak ada pelanggan ditemukan.</p>
-                <p class="text-xs text-slate-400 mt-1">Sesuaikan kata kunci pencarian atau filter status Anda.</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    Kombinasi kata kunci atau filter status/paket yang dipilih tidak menghasilkan data pelanggan.
+                </p>
+                <?php if ($isFiltered): ?>
+                    <div class="mt-4">
+                        <a href="customers.php" class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors inline-flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Bersihkan Filter & Tampilkan Semua
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php else: ?>
             <div class="overflow-x-auto">

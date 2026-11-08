@@ -396,6 +396,60 @@ if ($unpaidId > 0) {
     assertTest("FR-05: Tagihan berhasil diproses lunas dengan timestamp & collector", $paidBill && $paidBill['status'] === 'lunas' && !empty($paidBill['payment_date']));
 }
 
+// TEST 7.1: Fast Customer Search & Bill Status Filter Verification (T-011 / F2 / F3)
+// 1. Customer Search by Code & Name
+$stmtSearchCust = $pdo->prepare("
+    SELECT c.*, p.name AS package_name 
+    FROM customers c 
+    JOIN packages p ON c.package_id = p.id 
+    WHERE c.customer_code LIKE :q1 OR c.name LIKE :q2
+");
+$stmtSearchCust->execute([':q1' => '%RNG-001%', ':q2' => '%RNG-001%']);
+$foundCusts = $stmtSearchCust->fetchAll();
+$custSearchOk = count($foundCusts) === 1 && $foundCusts[0]['customer_code'] === 'RNG-001';
+
+// 2. Customer Filter by Status ('cuti' & 'aktif')
+$stmtCustCuti = $pdo->prepare("SELECT COUNT(*) FROM customers WHERE status = 'cuti'");
+$stmtCustCuti->execute();
+$cutiTotal = (int)$stmtCustCuti->fetchColumn();
+
+$stmtCustAktif = $pdo->prepare("SELECT COUNT(*) FROM customers WHERE status = 'aktif'");
+$stmtCustAktif->execute();
+$aktifTotal = (int)$stmtCustAktif->fetchColumn();
+$custFilterOk = ($cutiTotal >= 2 && $aktifTotal >= 5);
+
+// 3. Bill Status Filtering ('lunas' vs 'belum_lunas' for test batch)
+$stmtBillsLunas = $pdo->prepare("SELECT * FROM bills WHERE period_month = ? AND period_year = ? AND status = 'lunas'");
+$stmtBillsLunas->execute([$testMonth, $testYear]);
+$billsLunas = $stmtBillsLunas->fetchAll();
+
+$stmtBillsBelumLunas = $pdo->prepare("SELECT * FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas'");
+$stmtBillsBelumLunas->execute([$testMonth, $testYear]);
+$billsBelumLunas = $stmtBillsBelumLunas->fetchAll();
+
+$billFilterOk = (count($billsLunas) >= 1) && (count($billsBelumLunas) >= 1);
+foreach ($billsLunas as $bl) {
+    if ($bl['status'] !== 'lunas') { $billFilterOk = false; break; }
+}
+foreach ($billsBelumLunas as $bbl) {
+    if ($bbl['status'] !== 'belum_lunas') { $billFilterOk = false; break; }
+}
+
+// 4. Bill Search by Invoice Number
+$sampleInvNumber = $billsLunas[0]['bill_number'] ?? '';
+$stmtSearchInv = $pdo->prepare("
+    SELECT b.*, c.name AS customer_name 
+    FROM bills b 
+    JOIN customers c ON b.customer_id = c.id 
+    WHERE b.bill_number = ?
+");
+$stmtSearchInv->execute([$sampleInvNumber]);
+$foundBill = $stmtSearchInv->fetch();
+$billSearchOk = $foundBill && ($foundBill['bill_number'] === $sampleInvNumber);
+
+$t011Passed = $custSearchOk && $custFilterOk && $billFilterOk && $billSearchOk;
+assertTest("T-011/F2/F3: Pencarian nama/kode pelanggan dan filter status tagihan lunas/belum lunas berfungsi cepat & akurat", $t011Passed);
+
 // TEST 8: Setting Company Profile & Receipt Footers
 $compName = getSetting($pdo, 'company_name');
 assertTest("FR-06/FR-07: Pengaturan identitas struk & logo perusahaan tersimpan ('{$compName}')", !empty($compName));

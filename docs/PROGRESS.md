@@ -4,9 +4,9 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 ## Current State
 
-Tanggal: 2026-11-03
+Tanggal: 2026-11-08
 
-Task `T-009` telah berhasil di-merge ke branch `main`. Task `T-010` (Manajemen paket layanan internet WiFi) telah selesai dikerjakan pada branch `feat/T-010-packages-management`. Manajemen CRUD paket internet telah disempurnakan dengan dukungan status aktif (`is_active`), aksi cepat toggle aktivasi, validasi integritas relasional mencegah penghapusan paket yang masih digunakan pelanggan aktif, pembuatan endpoint API `api/packages.php`, tampilan 4 kartu metrik ringkasan varian paket & rata-rata tarif, serta pengujian otomatis `TEST 3.0` pada `tests/test_all_requirements.php` yang memverifikasi Create, Read, Update, Delete dan keterikatan tarif paket ke nominal tagihan (24/24 PASS, 100%).
+Task `T-010` telah berhasil di-merge ke branch `main`. Task `T-011` (Pencarian pelanggan dan filter status tagihan) telah selesai dikerjakan pada branch `feat/T-011-filter-search`. Pencarian cepat dan filter status pelanggan (aktif/cuti/isolir) serta paket WiFi telah diintegrasikan pada `customers.php` dan `api/customers.php`. Filter status tagihan (lunas/belum lunas) dan pencarian nomor invoice / nama pelanggan telah dioptimalkan pada `bills.php` dan `api/bills.php` dengan pill status cepat, tombol reset filter, counter badge dinamis, empty state interaktif, serta penanganan prepared statement dengan named parameters unik untuk keamanan native PDO. Seluruh pengujian otomatis di `tests/test_all_requirements.php` lulus sempurna (25/25 PASS, 100%).
 
 ## Completed
 
@@ -22,16 +22,18 @@ Task `T-009` telah berhasil di-merge ke branch `main`. Task `T-010` (Manajemen p
 | 2026-11-03 | `T-007`: Pengecualian otomatis pelanggan cuti dari tagihan | branch `feat/T-007-skip-cuti-billing` | Mutlak 0 tagihan fiktif, helper isCustomerExemptFromBilling, guardrail 11, 21 test lolos |
 | 2026-11-03 | `T-008`: Pencegahan duplikasi tagihan bulanan (idempotensi) | branch `feat/T-008-billing-idempotency` | Idempotensi 100%, unique constraint trapping (SQLSTATE 23000), 22 test lolos |
 | 2026-11-03 | `T-009`: Reaktivasi pelanggan cuti dengan tagihan bulan berjalan | branch `feat/T-009-reaktivasi-cuti` | Tagihan otomatis terbit saat cuti -> aktif, notifikasi modal reaktivasi, 23 test lolos |
+| 2026-11-03 | `T-010`: Manajemen paket layanan internet WiFi | branch `feat/T-010-packages-management` | Form CRUD paket WiFi, is_active toggle, referential safety, api/packages.php, 24 test lolos |
+| 2026-11-08 | `T-011`: Pencarian pelanggan dan filter status tagihan | branch `feat/T-011-filter-search` | Pencarian kode/nama/kontak/IP & filter paket di customers.php, filter status lunas/belum lunas & invoice di bills.php, API search, safe PDO params, 25 test lolos |
 
 ## In Progress
 
-- `T-010`: Manajemen paket layanan internet WiFi (branch `feat/T-010-packages-management`, status `review`)
+- `T-011`: Pencarian pelanggan dan filter status tagihan (branch `feat/T-011-filter-search`, status `review`)
 
 ## Next Up
 
-1. `T-011`: Pencarian pelanggan dan filter status tagihan
-2. `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar
-3. `T-013`: Template pesan WhatsApp konfirmasi pelunasan
+1. `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar
+2. `T-013`: Template pesan WhatsApp konfirmasi pelunasan
+3. `T-014`: Proses konfirmasi pelunasan multi-metode bayar
 
 ## Blockers
 
@@ -54,3 +56,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-03 | Antigravity AI & Saiful Islam | T-008 | Penjaminan idempotensi batch billing engine: pelacakan tagihan terbit vs aktif, proteksi ganda aplikasi dan database unique_customer_period (SQLSTATE 23000), respons cerdas API deteksi re-run, tombol & notifikasi kelengkapan tagihan di bills.php, dan pengujian TEST 6.3 (22/22 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-009
 - 2026-11-03 | Antigravity AI & Saiful Islam | T-009 | Otomasi penerbitan tagihan periode berjalan saat reaktivasi pelanggan cuti ke aktif (INV/YYYYMM/XXXX), penangkapan info tagihan di updateCustomerStatus, notifikasi reaktivasi pada footer.php dan app.js, serta penambahan pengujian TEST 6.4 (23/23 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-010
 - 2026-11-03 | Antigravity AI & Saiful Islam | T-010 | Penyempurnaan CRUD paket layanan internet: penambahan toggle aktivasi is_active, proteksi hapus paket berpelanggan, pembuatan API api/packages.php, 4 kartu ringkasan metrik, dan penambahan pengujian otomatis TEST 3.0 (24/24 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-011
+- 2026-11-08 | Antigravity AI & Saiful Islam | T-011 | Implementasi pencarian cepat dan filter multi-kriteria: pencarian kode/nama/kontak/IP & filter paket di customers.php, filter status lunas/belum lunas & pencarian invoice di bills.php, endpoint API search api/customers.php & api/bills.php, penanganan safe named parameter PDO, serta penambahan uji otomatis TEST 7.1 di test_all_requirements.php (25/25 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-012

@@ -9,11 +9,26 @@ require_once __DIR__ . '/includes/header.php';
 
 $pdo = getDB();
 
-// Current filters
+// Current filters (T-011)
 $filterMonth = (int)($_GET['month'] ?? date('n'));
 $filterYear = (int)($_GET['year'] ?? date('Y'));
 $filterStatus = $_GET['status'] ?? 'all';
 $search = trim($_GET['search'] ?? '');
+$isFiltered = ($filterStatus !== 'all' || !empty($search));
+
+// Helper for building bills filter URLs preserving period and search
+$buildBillsUrl = function($overrides = []) use ($filterMonth, $filterYear, $filterStatus, $search) {
+    $params = [
+        'month'  => $filterMonth,
+        'year'   => $filterYear,
+        'status' => $filterStatus,
+        'search' => $search
+    ];
+    $merged = array_merge($params, $overrides);
+    if ($merged['status'] === 'all') unset($merged['status']);
+    if (empty($merged['search'])) unset($merged['search']);
+    return 'bills.php?' . http_build_query($merged);
+};
 
 // Base Query
 $sql = "
@@ -35,8 +50,13 @@ if ($filterStatus !== 'all' && in_array($filterStatus, ['lunas', 'belum_lunas'])
 }
 
 if (!empty($search)) {
-    $sql .= " AND (b.bill_number LIKE :q OR c.name LIKE :q OR c.customer_code LIKE :q OR c.phone LIKE :q)";
-    $params[':q'] = "%{$search}%";
+    // Unique named params for native PDO statement safety
+    $sql .= " AND (b.bill_number LIKE :q1 OR c.name LIKE :q2 OR c.customer_code LIKE :q3 OR c.phone LIKE :q4)";
+    $term = "%{$search}%";
+    $params[':q1'] = $term;
+    $params[':q2'] = $term;
+    $params[':q3'] = $term;
+    $params[':q4'] = $term;
 }
 
 $sql .= " ORDER BY b.status ASC, b.due_date ASC, b.id DESC";
@@ -166,9 +186,31 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
         </a>
     </div>
 
-    <!-- Filter Controls (Neumorphic Inset Bar) -->
-    <div class="neu-flat rounded-3xl p-4 sm:p-5">
-        <form action="bills.php" method="GET" class="flex flex-wrap items-center justify-between gap-3 text-xs">
+    <!-- Filter Controls (Neumorphic Inset Bar - T-011) -->
+    <div class="neu-flat rounded-3xl p-4 sm:p-5 flex flex-col gap-4">
+        
+        <!-- Quick Status Pills -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex flex-wrap items-center gap-2 font-bold">
+                <a href="<?= e($buildBillsUrl(['status' => 'all'])) ?>" class="px-3.5 py-1.5 rounded-xl transition-all <?= $filterStatus === 'all' ? 'skeuo-btn-dark' : 'skeuo-btn-secondary text-slate-600' ?>">
+                    Semua (<?= (int)$summary['total_count'] ?>)
+                </a>
+                <a href="<?= e($buildBillsUrl(['status' => 'belum_lunas'])) ?>" class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'belum_lunas' ? 'bg-rose-600 text-white shadow-md' : 'skeuo-btn-secondary text-rose-700' ?>">
+                    <span class="led-pulse active-rose"></span> Belum Lunas (<?= (int)$summary['unpaid_count'] ?>)
+                </a>
+                <a href="<?= e($buildBillsUrl(['status' => 'lunas'])) ?>" class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 <?= $filterStatus === 'lunas' ? 'skeuo-btn-emerald' : 'skeuo-btn-secondary text-emerald-700' ?>">
+                    <span class="led-pulse active-green"></span> Lunas (<?= (int)$summary['paid_count'] ?>)
+                </a>
+            </div>
+
+            <!-- Active Results Counter Badge -->
+            <div class="text-xs font-semibold text-slate-500">
+                Menampilkan <strong class="text-slate-900"><?= count($bills) ?></strong> dari <?= (int)$summary['total_count'] ?> invoice
+            </div>
+        </div>
+
+        <!-- Filter Form with Period & Search -->
+        <form action="bills.php" method="GET" class="flex flex-wrap items-center justify-between gap-3 text-xs pt-3 border-t border-slate-200/60">
             
             <div class="flex flex-wrap items-center gap-2.5">
                 <!-- Month Select -->
@@ -195,6 +237,12 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
                 <button type="submit" class="px-5 py-2 skeuo-btn-dark rounded-xl font-black">
                     Filter Data
                 </button>
+
+                <?php if ($isFiltered): ?>
+                    <a href="bills.php?month=<?= $filterMonth ?>&year=<?= $filterYear ?>" class="px-3.5 py-2 rounded-xl text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 font-bold transition-all flex items-center gap-1.5 shadow-sm" title="Reset filter status dan pencarian">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filter
+                    </a>
+                <?php endif; ?>
             </div>
 
             <!-- Search box -->
@@ -213,9 +261,23 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
         
         <?php if (empty($bills)): ?>
             <div class="p-12 text-center text-slate-400">
-                <i class="fa-solid fa-file-invoice text-4xl mb-3 opacity-30"></i>
-                <p class="text-sm font-bold text-slate-800">Tidak ada tagihan untuk periode terpilih.</p>
-                <p class="text-xs text-slate-400 mt-1">Gunakan tombol "Generate Tagihan" di atas untuk membuat invoice baru bagi pelanggan aktif.</p>
+                <div class="w-14 h-14 rounded-2xl neu-inset mx-auto flex items-center justify-center text-rose-500 mb-3 shadow-inner">
+                    <i class="fa-solid fa-file-invoice text-2xl"></i>
+                </div>
+                <?php if ($isFiltered): ?>
+                    <p class="text-sm font-bold text-slate-800">Tidak ada tagihan yang cocok dengan filter pencarian.</p>
+                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        Kata kunci <?= !empty($search) ? '"' . e($search) . '"' : '' ?> pada status <strong class="text-slate-600"><?= e($filterStatus) ?></strong> tidak menemukan tagihan untuk periode <?= getMonthName($filterMonth) ?> <?= $filterYear ?>.
+                    </p>
+                    <div class="mt-4">
+                        <a href="bills.php?month=<?= $filterMonth ?>&year=<?= $filterYear ?>" class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors inline-flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Bersihkan Filter & Tampilkan Semua Tagihan Periode Ini
+                        </a>
+                    </div>
+                <?php else: ?>
+                    <p class="text-sm font-bold text-slate-800">Tidak ada tagihan untuk periode terpilih.</p>
+                    <p class="text-xs text-slate-400 mt-1">Gunakan tombol "Generate Tagihan" di atas untuk membuat invoice baru bagi pelanggan aktif.</p>
+                <?php endif; ?>
             </div>
         <?php else: ?>
             <div class="overflow-x-auto">
