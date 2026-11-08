@@ -693,6 +693,85 @@ $nodeFallbackOk = str_contains($nodeFallbackOutput, 'T017_RECONNECT_FALLBACK_OK'
 $t017Passed = $hasBtDriverFallback && $hasPrintCss && $hasFooterFallbackUi && $hasAppJsLogic && $nodeFallbackOk;
 assertTest("T-017/F5/R3: Fallback cetak browser (@media print 58mm/80mm), reconnect Bluetooth, & proteksi hang", $t017Passed);
 
+// TEST 7.5: Render Struk Digital Format Gambar PNG (T-018 / F5)
+$headerContent = file_get_contents(__DIR__ . '/../includes/header.php');
+
+// 1. Verifikasi Integrasi Pustaka html2canvas di header.php
+$hasHtml2CanvasLib = str_contains($headerContent, 'html2canvas')
+    && str_contains($headerContent, 'html2canvas.min.js');
+
+// 2. Verifikasi Elemen Kartu Struk & Tombol Unduh di footer.php
+$hasPngDownloadUi = str_contains($footerContent, 'id="digitalReceiptCard"')
+    && str_contains($footerContent, 'id="btnDownloadDigital"')
+    && str_contains($footerContent, 'handleDownloadDigitalReceipt()');
+
+// 3. Verifikasi Fungsi Ekspor PNG di assets/js/app.js
+$hasPngExportFunctions = str_contains($appJsContent, 'getSafeReceiptFilename(')
+    && str_contains($appJsContent, 'renderReceiptCanvasFallback(')
+    && str_contains($appJsContent, 'exportReceiptAsPng(')
+    && str_contains($appJsContent, 'handleDownloadDigitalReceipt(')
+    && str_contains($appJsContent, 'useCORS: true')
+    && str_contains($appJsContent, "backgroundColor: '#ffffff'");
+
+// 4. Verifikasi Eksekusi Logic Node.js untuk Rendering Canvas & Ekspor PNG
+$nodePngScript = __DIR__ . '/temp_test_t018_png.js';
+$nodePngCode = <<<'NODE_EOF'
+const path = require('path');
+const { getSafeReceiptFilename, renderReceiptCanvasFallback, exportReceiptAsPng } = require(path.resolve(__dirname, '../assets/js/app.js'));
+
+(async () => {
+    try {
+        // Test 1: Filename Sanitizer
+        const filename1 = getSafeReceiptFilename('INV/202611/0088');
+        const filename2 = getSafeReceiptFilename('INV?TEST*123');
+        const filenameOk = (filename1 === 'Struk-INV-202611-0088.png') && (filename2 === 'Struk-INV-TEST-123.png');
+
+        // Test 2: In-memory Canvas 2D Fallback Renderer
+        const sampleData = {
+            bill_number: 'INV/202611/0088',
+            customer_code: 'RNG-088',
+            customer_name: 'Agus Prasetyo',
+            customer_address: 'Dusun Rengganis RT 02',
+            period: 'November 2026',
+            package_name: 'Paket Reguler 20 Mbps',
+            package_speed: '20 Mbps',
+            amount_formatted: 'Rp 150.000',
+            payment_method: 'Tunai',
+            payment_date: '08/11/2026 10:15',
+            collector_name: 'Budi Santoso'
+        };
+
+        const canvasMock = renderReceiptCanvasFallback(sampleData);
+        const canvasOk = (canvasMock.width === 720 && canvasMock.height === 1060 && typeof canvasMock.toDataURL === 'function');
+
+        // Test 3: High-DPI PNG Exporter Promise
+        const exportRes = await exportReceiptAsPng(sampleData);
+        const exportOk = (exportRes.success === true)
+            && (exportRes.filename === 'Struk-INV-202611-0088.png')
+            && (typeof exportRes.dataUrl === 'string')
+            && exportRes.dataUrl.startsWith('data:image/png');
+
+        if (filenameOk && canvasOk && exportOk) {
+            process.stdout.write("T018_PNG_RENDER_OK");
+        } else {
+            process.stdout.write("T018_FAIL: " + JSON.stringify({ filenameOk, canvasOk, exportOk }));
+        }
+    } catch (err) {
+        process.stdout.write("T018_ERROR: " + err.message);
+    }
+})();
+NODE_EOF;
+
+file_put_contents($nodePngScript, $nodePngCode);
+$nodePngOutput = shell_exec('node ' . escapeshellarg($nodePngScript));
+if (file_exists($nodePngScript)) {
+    unlink($nodePngScript);
+}
+$nodePngOk = str_contains($nodePngOutput, 'T018_PNG_RENDER_OK');
+
+$t018Passed = $hasHtml2CanvasLib && $hasPngDownloadUi && $hasPngExportFunctions && $nodePngOk;
+assertTest("T-018/F5: Render struk digital ke format gambar PNG tajam (html2canvas & Canvas 2D engine)", $t018Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',
