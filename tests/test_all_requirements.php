@@ -461,6 +461,71 @@ $doublePayPrevented = ($doublePayAttempt === null);
 $t014Passed = $tunaiOk && $transferOk && $doublePayPrevented;
 assertTest("T-014/F5: Proses pelunasan multi-metode (Tunai/Transfer), pencatatan stempel waktu, nama kolektor, & proteksi anti-dobel", $t014Passed);
 
+// TEST 7.2: Desain Antarmuka Modal Struk Pembayaran & Rincian Transaksi (T-015 / F5)
+$footerContent = file_get_contents(__DIR__ . '/../includes/footer.php');
+$appJsContent  = file_get_contents(__DIR__ . '/../assets/js/app.js');
+
+// 1. Verifikasi Elemen Modal Struk di footer.php
+$hasModalContainers = str_contains($footerContent, 'id="receiptModal"')
+    && str_contains($footerContent, 'id="digitalReceiptCard"')
+    && str_contains($footerContent, 'id="thermalReceiptPrintArea"');
+
+// 2. Verifikasi 2 Tombol Aksi Utama + WhatsApp + Tutup
+$hasActionButtons = str_contains($footerContent, 'id="btnPrintThermal"')
+    && str_contains($footerContent, 'id="btnDownloadDigital"')
+    && str_contains($footerContent, 'id="btnShareWhatsApp"')
+    && str_contains($footerContent, 'closeReceiptModal()');
+
+// 3. Verifikasi Seluruh Elemen Data Struk Digital & Thermal
+$hasReceiptDataSlots = str_contains($footerContent, 'id="receiptCardNumber"')
+    && str_contains($footerContent, 'id="receiptCardDate"')
+    && str_contains($footerContent, 'id="receiptCardCode"')
+    && str_contains($footerContent, 'id="receiptCardCust"')
+    && str_contains($footerContent, 'id="receiptCardAddress"')
+    && str_contains($footerContent, 'id="receiptCardPeriod"')
+    && str_contains($footerContent, 'id="receiptCardPkg"')
+    && str_contains($footerContent, 'id="receiptCardAmount"')
+    && str_contains($footerContent, 'id="receiptCardMethod"')
+    && str_contains($footerContent, 'id="receiptCardCollector"')
+    && str_contains($footerContent, 'id="thermalBillNumber"')
+    && str_contains($footerContent, 'id="thermalCust"');
+
+// 4. Verifikasi Logika JavaScript di app.js
+$hasJsFunctions = str_contains($appJsContent, 'function showReceiptModal(')
+    && str_contains($appJsContent, 'function closeReceiptModal(')
+    && str_contains($appJsContent, 'function loadAndShowReceipt(')
+    && str_contains($appJsContent, 'handlePrintThermal')
+    && str_contains($appJsContent, 'handleDownloadDigitalReceipt');
+
+// 5. Verifikasi Kelengkapan Data Struk dari Tagihan Lunas
+$sampleBillId = $paidBillTunai ? $paidBillTunai['id'] : 0;
+$receiptDataComplete = false;
+if ($sampleBillId > 0) {
+    $stmtReceipt = $pdo->prepare("
+        SELECT b.*, c.customer_code, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
+               p.name AS package_name, p.speed AS package_speed
+        FROM bills b
+        JOIN customers c ON b.customer_id = c.id
+        JOIN packages p ON c.package_id = p.id
+        WHERE b.id = ?
+    ");
+    $stmtReceipt->execute([$sampleBillId]);
+    $rb = $stmtReceipt->fetch();
+    if ($rb) {
+        $receiptDataComplete = !empty($rb['bill_number'])
+            && !empty($rb['customer_code'])
+            && !empty($rb['customer_name'])
+            && !empty($rb['package_name'])
+            && !empty($rb['payment_date'])
+            && !empty($rb['payment_method'])
+            && !empty($rb['collector_name'])
+            && ($rb['status'] === 'lunas');
+    }
+}
+
+$t015Passed = $hasModalContainers && $hasActionButtons && $hasReceiptDataSlots && $hasJsFunctions && $receiptDataComplete;
+assertTest("T-015/F5: Desain antarmuka modal struk memuat kartu digital, thermal preview, rincian lengkap, & tombol aksi", $t015Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',

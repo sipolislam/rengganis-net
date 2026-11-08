@@ -388,16 +388,6 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
 </div>
 
 <script>
-async function loadAndShowReceipt(billId) {
-    try {
-        const res = await fetch(`api/bills.php?action=get_receipt&id=${billId}`).then(r => r.json());
-        if (!res.success) throw new Error(res.message);
-        showReceiptModal(res.data);
-    } catch (e) {
-        alert('Gagal memuat struk: ' + e.message);
-    }
-}
-
 async function triggerGenerateBills() {
     const isGenerated = <?= $isFullyGenerated ? 'true' : 'false' ?>;
     const promptMsg = isGenerated 

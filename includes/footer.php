@@ -24,7 +24,7 @@
     <!-- ====================================================================
          MODAL 1: PROSES PEMBAYARAN TAGIHAN (SKEUOMORPHIC CASH DRAWER STYLE)
          ==================================================================== -->
-    <div id="paymentModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
+    <div id="paymentModal" onclick="if(event.target === this) closePaymentModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
         <div class="bg-[#edf3f9] rounded-3xl max-w-md w-full shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-white/80 overflow-hidden transform transition-all animate-scale-up">
             
             <!-- Metallic Beveled Header -->
@@ -109,27 +109,27 @@
     <!-- ====================================================================
          MODAL 2: BUKTI PEMBAYARAN STRUK THERMAL & DIGITAL CARD (FUTURISTIC)
          ==================================================================== -->
-    <div id="receiptModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 overflow-y-auto">
-        <div class="bg-[#edf3f9] rounded-3xl max-w-lg w-full shadow-[0_25px_60px_rgba(0,0,0,0.5)] border border-white/80 overflow-hidden transform transition-all animate-scale-up">
+    <div id="receiptModal" onclick="if(event.target === this) closeReceiptModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-[#edf3f9] rounded-3xl max-w-lg w-full shadow-[0_25px_60px_rgba(0,0,0,0.5)] border border-white/80 overflow-hidden transform transition-all animate-scale-up my-auto">
             
             <!-- Dark Cyber Header -->
-            <div class="px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between border-b border-slate-700">
+            <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-slate-850 to-slate-800 text-white flex items-center justify-between border-b border-slate-700/80">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shadow-inner">
                         <i class="fa-solid fa-receipt text-base"></i>
                     </div>
                     <div>
                         <h3 class="font-extrabold text-sm leading-tight font-tech">Bukti Pelunasan Resmi</h3>
-                        <p class="text-[11px] text-slate-400">Pilih mode cetak thermal atau berkas digital</p>
+                        <p class="text-[11px] text-slate-400">Kuitansi digital & cetak thermal 58mm</p>
                     </div>
                 </div>
-                <button onclick="closeReceiptModal()" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors">
+                <button onclick="closeReceiptModal()" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors focus:ring-2 focus:ring-slate-400 focus:outline-none" aria-label="Tutup Jendela Struk">
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
 
             <!-- Body: Stylized Digital Receipt Card Preview -->
-            <div class="p-6 bg-[#e2eaf4] flex flex-col items-center">
+            <div class="p-4 sm:p-6 bg-[#e2eaf4] flex flex-col items-center">
                 
                 <div id="digitalReceiptCard" class="w-full max-w-[340px] bg-white rounded-3xl p-6 shadow-[0_20px_35px_rgba(0,0,0,0.12)] border border-slate-200 text-slate-800 text-xs relative overflow-hidden">
                     
@@ -141,101 +141,115 @@
                         <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center mb-2 shadow-md shadow-blue-500/30">
                             <i class="fa-solid fa-wifi text-xl"></i>
                         </div>
-                        <h4 class="font-black text-base tracking-tight text-slate-900 font-tech">RENGGANIS NET</h4>
-                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Solusi Internet Cepat & Hemat</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Jl. Raya Rengganis No. 45 &bull; CS: 0812-3456-7890</p>
+                        <h4 id="receiptCardCompany" class="font-black text-base tracking-tight text-slate-900 font-tech"><?= e(getSetting($pdo, 'company_name', 'RENGGANIS NET')) ?></h4>
+                        <p id="receiptCardTagline" class="text-[11px] text-slate-500 font-bold uppercase tracking-wider"><?= e(getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat')) ?></p>
+                        <p id="receiptCardContact" class="text-[10px] text-slate-400 mt-0.5"><?= e(getSetting($pdo, 'company_address', 'Jl. Raya Rengganis No. 45')) ?> &bull; CS: <?= e(getSetting($pdo, 'company_phone', '0812-3456-7890')) ?></p>
                     </div>
 
                     <!-- Status Banner -->
                     <div class="py-3 flex items-center justify-between border-b border-dashed border-slate-300">
                         <div>
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Status Tagihan</span>
-                            <span class="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-sm">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> LUNAS
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Status Tagihan</span>
+                            <span class="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-300 shadow-sm">
+                                <span class="led-pulse active-green"></span> LUNAS
                             </span>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Tgl Bayar</span>
-                            <span id="receiptCardDate" class="text-[11px] font-bold text-slate-800">-</span>
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Tgl Bayar</span>
+                            <span id="receiptCardDate" class="text-[11px] font-bold text-slate-800 font-mono">-</span>
                         </div>
                     </div>
 
                     <!-- Details Table -->
                     <div class="py-3 space-y-1.5 border-b border-dashed border-slate-300 text-xs">
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">No. Invoice</span>
-                            <span id="receiptCardNumber" class="font-mono font-bold text-slate-900">-</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 shrink-0">No. Invoice</span>
+                            <span id="receiptCardNumber" class="font-mono font-bold text-slate-900 tracking-tight">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">ID Pelanggan</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 shrink-0">ID Pelanggan</span>
                             <span id="receiptCardCode" class="font-mono font-bold text-blue-600">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Nama Pelanggan</span>
-                            <span id="receiptCardCust" class="font-extrabold text-slate-900">-</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 shrink-0">Nama Pelanggan</span>
+                            <span id="receiptCardCust" class="font-extrabold text-slate-900 text-right">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Alamat</span>
-                            <span id="receiptCardAddress" class="text-right text-slate-700 font-semibold max-w-[170px] truncate">-</span>
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="text-slate-500 shrink-0">Alamat</span>
+                            <span id="receiptCardAddress" class="text-right text-slate-700 font-semibold max-w-[190px] break-words text-[11px] leading-tight" title="">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Periode</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 shrink-0">Periode</span>
                             <span id="receiptCardPeriod" class="font-bold text-slate-800">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Paket Layanan</span>
-                            <span id="receiptCardPkg" class="font-bold text-blue-700">-</span>
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="text-slate-500 shrink-0">Paket Layanan</span>
+                            <span id="receiptCardPkg" class="font-bold text-blue-700 text-right">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Metode Bayar</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 shrink-0">Metode Bayar</span>
                             <span id="receiptCardMethod" class="font-semibold text-slate-800">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Kasir / Kolektor</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 shrink-0">Kasir / Kolektor</span>
                             <span id="receiptCardCollector" class="font-semibold text-slate-800">-</span>
+                        </div>
+                        <div id="receiptCardNotesRow" class="flex justify-between items-start gap-2 hidden">
+                            <span class="text-slate-500 shrink-0">Catatan</span>
+                            <span id="receiptCardNotes" class="text-right text-slate-600 italic text-[11px] break-words max-w-[190px]">-</span>
                         </div>
                     </div>
 
                     <!-- Total Amount -->
                     <div class="pt-3 pb-2 flex items-center justify-between">
                         <span class="font-black text-slate-700 text-xs uppercase tracking-wider">TOTAL PEMBAYARAN</span>
-                        <span id="receiptCardAmount" class="font-black text-blue-700 text-lg font-mono">Rp 0</span>
+                        <span id="receiptCardAmount" class="font-black text-blue-700 text-lg font-mono tracking-tight">Rp 0</span>
                     </div>
 
                     <!-- Footer Note -->
                     <div class="pt-2 text-center text-[10px] text-slate-400 border-t border-slate-100">
-                        <p class="font-medium">Terima kasih atas pembayaran Anda.</p>
-                        <p class="text-[9px] mt-0.5">Simpan struk ini sebagai bukti transaksi resmi yang sah.</p>
+                        <p id="receiptCardFooterText1" class="font-medium">Terima kasih atas pembayaran Anda.</p>
+                        <p id="receiptCardFooterText2" class="text-[9px] mt-0.5">Simpan struk ini sebagai bukti transaksi resmi yang sah.</p>
                     </div>
 
                 </div>
 
             </div>
 
-            <!-- Footer Buttons (Acceptance Criteria 14: 2 Main Actions + WhatsApp) -->
+            <!-- Footer Buttons (Acceptance Criteria: 2 Main Actions + WhatsApp + Close) -->
             <div class="p-5 bg-[#edf3f9] border-t border-white/80 space-y-3">
                 <div class="grid grid-cols-2 gap-3">
                     
                     <!-- BUTTON 1: Cetak Thermal (ESC/POS Bluetooth & 58mm window.print) -->
-                    <button type="button" id="btnPrintThermal" onclick="handlePrintThermal()" class="w-full py-3 px-4 rounded-xl skeuo-btn-dark font-extrabold text-xs flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-print text-blue-400"></i> Cetak Thermal
+                    <button type="button" id="btnPrintThermal" onclick="handlePrintThermal()" 
+                            class="w-full py-3 px-4 rounded-xl skeuo-btn-dark font-extrabold text-xs flex items-center justify-center gap-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                            title="Cetak struk ke printer thermal Bluetooth (58mm/80mm)">
+                        <i class="fa-solid fa-print text-blue-400"></i>
+                        <span>Cetak Thermal</span>
                     </button>
 
                     <!-- BUTTON 2: Unduh Struk Digital (PNG image via html2canvas) -->
-                    <button type="button" id="btnDownloadDigital" onclick="handleDownloadDigitalReceipt()" class="w-full py-3 px-4 rounded-xl skeuo-btn-emerald font-extrabold text-xs flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-file-image"></i> Unduh Digital
+                    <button type="button" id="btnDownloadDigital" onclick="handleDownloadDigitalReceipt()" 
+                            class="w-full py-3 px-4 rounded-xl skeuo-btn-emerald font-extrabold text-xs flex items-center justify-center gap-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                            title="Unduh gambar kuitansi format PNG tajam">
+                        <i class="fa-solid fa-file-image"></i>
+                        <span>Unduh Digital</span>
                     </button>
 
                 </div>
 
                 <!-- Secondary Action: WhatsApp Direct Link -->
-                <a id="btnShareWhatsApp" href="#" target="_blank" class="w-full py-2.5 px-4 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center justify-center gap-2 text-emerald-700">
-                    <i class="fa-brands fa-whatsapp text-sm text-emerald-600"></i> Kirim Struk via WhatsApp
+                <a id="btnShareWhatsApp" href="#" target="_blank" 
+                   class="w-full py-2.5 px-4 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center justify-center gap-2 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border border-emerald-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-sm"
+                   title="Kirim bukti pembayaran resmi langsung via WhatsApp">
+                    <i class="fa-brands fa-whatsapp text-sm text-emerald-600"></i>
+                    <span>Kirim Struk via WhatsApp</span>
                 </a>
 
                 <div class="text-center pt-1">
-                    <button type="button" onclick="closeReceiptModal()" class="text-xs text-slate-400 hover:text-slate-600 font-bold">
-                        Tutup Jendela
+                    <button type="button" onclick="closeReceiptModal()" 
+                            class="text-xs text-slate-500 hover:text-slate-700 font-bold px-3 py-1 rounded-lg hover:bg-slate-200/50 transition-colors focus:ring-2 focus:ring-slate-400 focus:outline-none">
+                        Tutup Jendela (Esc)
                     </button>
                 </div>
             </div>
@@ -246,7 +260,7 @@
     <!-- ====================================================================
          MODAL 3: UBAH STATUS PELANGGAN (AKTIF/CUTI/ISOLIR - FR-03)
          ==================================================================== -->
-    <div id="statusModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
+    <div id="statusModal" onclick="if(event.target === this) closeStatusModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
         <div class="bg-[#edf3f9] rounded-3xl max-w-md w-full shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-white/80 overflow-hidden transform transition-all animate-scale-up">
             
             <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
@@ -319,10 +333,10 @@
          ==================================================================== -->
     <div id="thermalReceiptPrintArea" class="hidden">
         <div style="text-align: center; margin-bottom: 4px;">
-            <div style="font-weight: bold; font-size: 13px;">RENGGANIS NET</div>
-            <div style="font-size: 9px;">Solusi Internet Cepat & Hemat</div>
-            <div style="font-size: 8px;">Telp: 0812-3456-7890</div>
-            <div style="font-size: 8px;">Jl. Raya Rengganis No. 45</div>
+            <div id="thermalCompanyName" style="font-weight: bold; font-size: 13px;"><?= e(getSetting($pdo, 'company_name', 'RENGGANIS NET')) ?></div>
+            <div id="thermalCompanyTagline" style="font-size: 9px;"><?= e(getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat')) ?></div>
+            <div id="thermalCompanyPhone" style="font-size: 8px;">Telp: <?= e(getSetting($pdo, 'company_phone', '0812-3456-7890')) ?></div>
+            <div id="thermalCompanyAddress" style="font-size: 8px;"><?= e(getSetting($pdo, 'company_address', 'Jl. Raya Rengganis No. 45')) ?></div>
         </div>
         <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
         <div style="display: flex; justify-content: space-between; font-size: 10px;">
@@ -371,10 +385,14 @@
             <span>Kasir:</span>
             <span id="thermalCollector">Admin</span>
         </div>
+        <div id="thermalNotesRow" style="display: none; justify-content: space-between; font-size: 9px;">
+            <span>Catatan:</span>
+            <span id="thermalNotes">-</span>
+        </div>
         <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
-        <div style="text-align: center; font-size: 9px; margin-top: 4px;">
-            <div>Terima kasih atas pembayaran Anda.</div>
-            <div>Simpan struk ini sbg bukti sah.</div>
+        <div id="thermalReceiptFooter" style="text-align: center; font-size: 9px; margin-top: 4px;">
+            <div><?= e(getSetting($pdo, 'receipt_footer_line1', 'Terima kasih atas pembayaran Anda.')) ?></div>
+            <div><?= e(getSetting($pdo, 'receipt_footer_line2', 'Simpan struk ini sbg bukti sah.')) ?></div>
         </div>
         <div style="height: 15mm;"></div>
     </div>

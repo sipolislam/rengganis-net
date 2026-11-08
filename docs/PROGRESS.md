@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-013` telah berhasil di-merge ke branch `main`. Task `T-014` (Proses konfirmasi pelunasan multi-metode bayar) telah selesai dikerjakan pada branch `feat/T-014-payment-processing`. Fungsi pelunasan `processBillPayment` disempurnakan dengan transaksi atomik berproteksi anti-dobel (idempotensi pelunasan), pencatatan stempel waktu transaksi akurat, nama kolektor, catatan opsional, dan validasi multi-metode pembayaran (Tunai, Transfer BCA/BRI/Mandiri, QRIS, DANA/Gopay). Modal pelunasan di `footer.php` memperbarui status baris tabel tagihan secara realtime beserta pembaruan tautan Kuitansi WA, dan pengujian otomatis `TEST 7` di `tests/test_all_requirements.php` lulus 100% (27/27 PASS).
+Task `T-015` (Desain antarmuka modal struk pembayaran) telah selesai dikerjakan pada branch `feat/T-015-receipt-modal-ui`. Modal struk pembayaran `#receiptModal` disempurnakan dengan pratinjau kartu digital eksklusif (`#digitalReceiptCard`) dan layout thermal 58mm (`#thermalReceiptPrintArea`), rincian transaksi lengkap (identitas usaha, no invoice, kode & nama pelanggan, alamat, periode, paket & kecepatan bandwidth, metode bayar, nama kasir/kolektor, catatan opsional, total nominal rupiah, badge status LUNAS beranimasi LED hijau), 2 tombol aksi utama ("Cetak Thermal" & "Unduh Struk Digital PNG"), tombol integrasi langsung "Kirim Struk via WhatsApp", fungsi global `loadAndShowReceipt(billId)`, serta aksesibilitas keyboard (Esc key) dan klik backdrop. Pengujian otomatis `TEST 7.2` di `tests/test_all_requirements.php` lulus 100% (28/28 PASS).
 
 ## Completed
 
@@ -27,16 +27,17 @@ Task `T-013` telah berhasil di-merge ke branch `main`. Task `T-014` (Proses konf
 | 2026-11-08 | `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar | branch `feat/T-012-wa-notification-template` | Template WhatsApp dual-channel (Online QR & Offline Tunai Pas), tombol aksi WA di bills.php, api/bills.php get_wa_billing, 26 test lolos |
 | 2026-11-08 | `T-013`: Template pesan WhatsApp konfirmasi pelunasan | branch `feat/T-013-wa-receipt-template` | Kuitansi digital WhatsApp nomor transaksi resmi INV/..., tombol Kuitansi WA di bills.php & modal struk app.js, 27 test lolos |
 | 2026-11-08 | `T-014`: Proses konfirmasi pelunasan multi-metode bayar | branch `feat/T-014-payment-processing` | Pelunasan multi-metode bayar, transaksi atomik anti-dobel status 'belum_lunas', pembaruan baris realtime, 27 test lolos |
+| 2026-11-08 | `T-015`: Desain antarmuka modal struk pembayaran | branch `feat/T-015-receipt-modal-ui` | Desain modal struk visual kartu digital & thermal 58mm, rincian pembayaran lengkap, 2 tombol aksi utama, kuitansi WA, dan 28 test lolos |
 
 ## In Progress
 
-- `T-011`: Pencarian pelanggan dan filter status tagihan (branch `feat/T-011-filter-search`, status `review`)
+- `T-015`: Desain antarmuka modal struk pembayaran (branch `feat/T-015-receipt-modal-ui`, status `review`)
 
 ## Next Up
 
-1. `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar
-2. `T-013`: Template pesan WhatsApp konfirmasi pelunasan
-3. `T-014`: Proses konfirmasi pelunasan multi-metode bayar
+1. `T-016`: Driver Web Bluetooth API printer thermal ESC/POS
+2. `T-017`: Fallback cetak browser dan reconnect printer Bluetooth
+3. `T-018`: Render struk digital ke format gambar PNG
 
 ## Blockers
 
@@ -64,3 +65,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-012 | Implementasi template WhatsApp penagihan dual-channel (F4/R2): helper buildBillingWhatsAppMessage & buildBillingWhatsAppUrl di helpers.php, tombol kirim WA di bills.php, endpoint API get_wa_billing di api/bills.php, instruksi tunai pas, dan pengujian TEST 4.1 (26/26 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-013
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-013 | Implementasi template WhatsApp konfirmasi pelunasan / kuitansi digital resmi (F4): helper buildPaymentReceiptWhatsAppMessage & buildPaymentReceiptWhatsAppUrl di helpers.php, tombol Kuitansi WA di bills.php, integrasi showReceiptModal di app.js, endpoint get_wa_receipt di api/bills.php, dan pengujian TEST 4.2 (27/27 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-014
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-014 | Penguatan konfirmasi pelunasan multi-metode bayar (F5): transaksi atomik status 'belum_lunas', validasi metode bayar, pembaruan baris realtime di footer.php, proteksi anti-dobel pelunasan, dan pengujian TEST 7 (27/27 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-015
+- 2026-11-08 | Antigravity AI & Saiful Islam | T-015 | Desain antarmuka modal struk pembayaran (F5): visual kartu digital eksklusif, pratinjau thermal 58mm, 2 tombol aksi utama (Cetak Thermal & Unduh Digital), integrasi kuitansi WhatsApp, handler loadAndShowReceipt global, aksesibilitas keyboard (Esc/Backdrop), dan pengujian TEST 7.2 (28/28 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-016
