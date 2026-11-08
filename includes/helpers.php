@@ -571,3 +571,84 @@ function buildBillingWhatsAppUrl(array $bill, ?PDO $pdo = null): string {
 
     return "https://wa.me/{$waPhone}?text=" . rawurlencode($message);
 }
+
+
+/**
+ * Generate formatted WhatsApp payment receipt / confirmation message for a paid bill (F4 / T-013).
+ * Contains official transaction reference number (bill_number), customer details, payment method,
+ * payment timestamp, collector name, and receipt footer.
+ *
+ * @param array $bill Paid bill data
+ * @param PDO|null $pdo Database connection
+ * @return string Formatted plain text receipt message
+ */
+function buildPaymentReceiptWhatsAppMessage(array $bill, ?PDO $pdo = null): string {
+    if (!$pdo) {
+        $pdo = getDB();
+    }
+
+    $companyName = getSetting($pdo, 'company_name', 'Rengganis Net');
+    $companyTagline = getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat');
+    $companyPhone = getSetting($pdo, 'company_phone', '0812-3456-7890');
+    $receiptFooter = getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti pembayaran yang sah.");
+
+    $customerName = trim($bill['customer_name'] ?? $bill['name'] ?? 'Pelanggan');
+    $customerCode = trim($bill['customer_code'] ?? '-');
+    $customerAddress = trim($bill['customer_address'] ?? $bill['address'] ?? '-');
+    $billNumber = trim($bill['bill_number'] ?? '-');
+    $periodMonth = (int)($bill['period_month'] ?? date('n'));
+    $periodYear = (int)($bill['period_year'] ?? date('Y'));
+    $periodLabel = getMonthName($periodMonth) . ' ' . $periodYear;
+    $packageName = trim($bill['package_name'] ?? 'Paket WiFi');
+    $packageSpeed = trim($bill['package_speed'] ?? '');
+    $pkgFull = $packageSpeed ? "{$packageName} ({$packageSpeed})" : $packageName;
+    $amountFormatted = formatRupiah((float)($bill['amount'] ?? 0));
+    $paymentDate = !empty($bill['payment_date']) ? formatDate($bill['payment_date'], true) : date('d/m/Y H:i');
+    $paymentMethod = trim($bill['payment_method'] ?? 'Tunai');
+    $collectorName = trim($bill['collector_name'] ?? 'Admin Kasir');
+    $notes = trim($bill['notes'] ?? '');
+
+    $msg = "*BUKTI PEMBAYARAN SAH (KUITANSI DIGITAL)*\n";
+    $msg .= "*{$companyName}* - {$companyTagline}\n";
+    $msg .= "---------------------------------------------\n";
+    $msg .= "Terima kasih! Pembayaran tagihan internet WiFi Anda telah kami terima dan diverifikasi.\n\n";
+    $msg .= "📄 No. Transaksi / Kuitansi : *{$billNumber}*\n";
+    $msg .= "👤 Pelanggan : *{$customerName}* ({$customerCode})\n";
+    if ($customerAddress !== '-') {
+        $msg .= "📍 Alamat : {$customerAddress}\n";
+    }
+    $msg .= "📦 Paket Layanan : *{$pkgFull}*\n";
+    $msg .= "🗓️ Periode Tagihan : *{$periodLabel}*\n";
+    $msg .= "💰 Total Pelunasan : *{$amountFormatted}*\n";
+    $msg .= "💳 Metode Pembayaran : *{$paymentMethod}*\n";
+    $msg .= "📅 Waktu Transaksi : *{$paymentDate}*\n";
+    $msg .= "👨‍💼 Petugas Kasir / Kolektor : *{$collectorName}*\n";
+    if (!empty($notes)) {
+        $msg .= "📝 Catatan : {$notes}\n";
+    }
+    $msg .= "✅ Status Pembayaran : *LUNAS (SAH)*\n\n";
+    $msg .= "---------------------------------------------\n";
+    $msg .= trim($receiptFooter) . "\n";
+    $msg .= "📞 Bantuan & Layanan: {$companyPhone}";
+
+    return $msg;
+}
+
+/**
+ * Generate full wa.me URL for payment receipt confirmation (F4 / T-013).
+ *
+ * @param array $bill Paid bill data
+ * @param PDO|null $pdo Database connection
+ * @return string WhatsApp click-to-chat URL
+ */
+function buildPaymentReceiptWhatsAppUrl(array $bill, ?PDO $pdo = null): string {
+    $phone = $bill['customer_phone'] ?? $bill['phone'] ?? '';
+    $waPhone = formatWhatsAppNumber($phone);
+    $message = buildPaymentReceiptWhatsAppMessage($bill, $pdo);
+
+    if (empty($waPhone)) {
+        return '#';
+    }
+
+    return "https://wa.me/{$waPhone}?text=" . rawurlencode($message);
+}

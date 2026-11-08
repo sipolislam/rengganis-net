@@ -385,6 +385,44 @@ if ($cutiTarget) {
 
 assertTest("T-009/F2/F3: Reaktivasi pelanggan dari cuti ke aktif otomatis menerbitkan tagihan bulan berjalan", $reactivationBillingPassed);
 
+// TEST 4.2: WhatsApp Payment Confirmation Receipt Template (T-013 / F4)
+// Use the paid bill or create a simulated paid bill record
+$samplePaidBillT013 = [
+    'customer_name'    => 'Dewi Lestari',
+    'customer_code'    => 'RNG-002',
+    'customer_phone'   => '081234567802',
+    'customer_address' => 'RT 02 / RW 01, Dusun Krajan Timur',
+    'bill_number'      => 'INV/202611/0002',
+    'period_month'     => $testMonth,
+    'period_year'      => $testYear,
+    'package_name'     => 'Paket Hemat 10 Mbps',
+    'package_speed'    => '10 Mbps',
+    'amount'           => 100000.00,
+    'payment_date'     => "{$testYear}-11-05 14:30:00",
+    'payment_method'   => 'Transfer BCA',
+    'collector_name'   => 'Siti Aminah (Kasir)',
+    'notes'            => 'Lunas via transfer m-banking BCA'
+];
+
+$receiptMsg = buildPaymentReceiptWhatsAppMessage($samplePaidBillT013, $pdo);
+$receiptUrl = buildPaymentReceiptWhatsAppUrl($samplePaidBillT013, $pdo);
+
+// Assertions for T-013 / F4 Acceptance Criteria:
+// 1. Memuat teks kuitansi resmi & nomor transaksi tagihan
+$hasReceiptHeader = str_contains($receiptMsg, 'BUKTI PEMBAYARAN SAH') || str_contains($receiptMsg, 'KUITANSI');
+$hasTxNumber = str_contains($receiptMsg, 'INV/202611/0002');
+$hasCustDetails = str_contains($receiptMsg, 'Dewi Lestari') && str_contains($receiptMsg, 'RNG-002');
+$hasAmountAndMethod = str_contains($receiptMsg, 'Rp 100.000') && str_contains($receiptMsg, 'Transfer BCA');
+$hasCollectorAndStatus = str_contains($receiptMsg, 'Siti Aminah (Kasir)') && str_contains($receiptMsg, 'LUNAS');
+$hasFooterNote = str_contains($receiptMsg, 'bukti pembayaran yang sah') || str_contains($receiptMsg, 'bukti sah');
+
+// 2. URL wa.me valid yang memuat teks kuitansi
+$hasValidReceiptUrl = str_starts_with($receiptUrl, 'https://wa.me/6281234567802?text=')
+    && (urldecode(substr($receiptUrl, strlen('https://wa.me/6281234567802?text='))) === $receiptMsg);
+
+$t013Passed = $hasReceiptHeader && $hasTxNumber && $hasCustDetails && $hasAmountAndMethod && $hasCollectorAndStatus && $hasFooterNote && $hasValidReceiptUrl;
+assertTest("T-013/F4: Tombol WA menghasilkan teks kuitansi resmi beserta nomor transaksi tagihan", $t013Passed);
+
 // TEST 7: Payment Processing (FR-05)
 // Pick one unpaid bill from the test batch
 $stmtUnpaid = $pdo->prepare("SELECT id FROM bills WHERE period_month = ? AND period_year = ? AND status = 'belum_lunas' LIMIT 1");

@@ -83,26 +83,34 @@ function showReceiptModal(receiptData) {
     document.getElementById('thermalMethod').textContent = receiptData.payment_method || 'Tunai';
     document.getElementById('thermalCollector').textContent = receiptData.collector_name || 'Admin';
 
-    // Configure WhatsApp Button link
+    // Configure WhatsApp Button link (T-013: use server-generated receipt URL or structured template)
     const waBtn = document.getElementById('btnShareWhatsApp');
-    if (waBtn && receiptData.customer_phone) {
-        let phone = receiptData.customer_phone.replace(/\D/g, '');
-        if (phone.startsWith('0')) {
-            phone = '62' + phone.substring(1);
+    if (waBtn) {
+        if (receiptData.wa_receipt_url) {
+            waBtn.href = receiptData.wa_receipt_url;
+        } else if (receiptData.customer_phone) {
+            let phone = receiptData.customer_phone.replace(/\D/g, '');
+            if (phone.startsWith('0')) {
+                phone = '62' + phone.substring(1);
+            }
+            const text = `*BUKTI PEMBAYARAN SAH (KUITANSI DIGITAL)*\n` +
+                `*Rengganis Net* - Solusi Internet Cepat & Hemat\n` +
+                `---------------------------------------------\n` +
+                `Terima kasih! Pembayaran tagihan internet WiFi Anda telah kami terima dan diverifikasi.\n\n` +
+                `📄 No. Transaksi / Kuitansi : *${receiptData.bill_number}*\n` +
+                `👤 Pelanggan : *${receiptData.customer_name}* (${receiptData.customer_code})\n` +
+                `📦 Paket Layanan : *${receiptData.package_name}*\n` +
+                `🗓️ Periode Tagihan : *${receiptData.period}*\n` +
+                `💰 Total Pelunasan : *${receiptData.amount_formatted}*\n` +
+                `💳 Metode Pembayaran : *${receiptData.payment_method || 'Tunai'}*\n` +
+                `📅 Waktu Transaksi : *${receiptData.payment_date || receiptData.date}*\n` +
+                `👨‍💼 Petugas Kasir / Kolektor : *${receiptData.collector_name || 'Admin Kasir'}*\n` +
+                `✅ Status Pembayaran : *LUNAS (SAH)*\n\n` +
+                `---------------------------------------------\n` +
+                `Simpan bukti pembayaran ini sebagai bukti sah transaksi.\n` +
+                `📞 Bantuan & Layanan: 0812-3456-7890`;
+            waBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
         }
-        const text = `*BUKTI PEMBAYARAN WIFI RENGGANIS NET*\n` +
-            `--------------------------------\n` +
-            `No. Struk : ${receiptData.bill_number}\n` +
-            `Pelanggan : ${receiptData.customer_name} (${receiptData.customer_code})\n` +
-            `Periode   : ${receiptData.period}\n` +
-            `Paket     : ${receiptData.package_name}\n` +
-            `Total     : ${receiptData.amount_formatted}\n` +
-            `Status    : *LUNAS*\n` +
-            `Tgl Bayar : ${receiptData.payment_date || receiptData.date}\n` +
-            `Metode    : ${receiptData.payment_method || 'Tunai'}\n` +
-            `--------------------------------\n` +
-            `Terima kasih telah berlangganan internet Rengganis Net!`;
-        waBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
     }
 
     const modal = document.getElementById('receiptModal');

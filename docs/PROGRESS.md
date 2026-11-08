@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-011` telah berhasil di-merge ke branch `main`. Task `T-012` (Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar) telah selesai dikerjakan pada branch `feat/T-012-wa-notification-template`. Template pesan WhatsApp penagihan terstruktur (F4 / R2) telah diimplementasikan dengan dua cabang opsi pembayaran yang jelas: Opsi 1 Online QR / Transfer Bank dan Opsi 2 Offline Tunai Pas dengan instruksi teks eksplisit "siapkan uang tunai sejumlah tagihannya". Tombol aksi WhatsApp langsung terintegrasi di setiap baris invoice belum lunas pada `bills.php` serta tersedia secara terprogram melalui endpoint `api/bills.php?action=get_wa_billing`. Pengujian otomatis `TEST 4.1` di `tests/test_all_requirements.php` memverifikasi seluruh komponen template dan URL `wa.me` lulus 100% (26/26 PASS).
+Task `T-012` telah berhasil di-merge ke branch `main`. Task `T-013` (Template pesan WhatsApp konfirmasi pelunasan) telah selesai dikerjakan pada branch `feat/T-013-wa-receipt-template`. Template kuitansi digital WhatsApp resmi telah diimplementasikan memuat nomor transaksi invoice (`bill_number`), identitas pelanggan, detail paket, nominal pelunasan, metode pembayaran, stempel waktu, nama kolektor/kasir, dan footer tanda sah transaksi. Tombol Kuitansi WA terintegrasi pada `bills.php` untuk tagihan berstatus lunas, modal struk `footer.php` melalui `assets/js/app.js`, serta endpoint API `api/bills.php` (`action=get_wa_receipt` & `action=get_receipt`). Pengujian otomatis `TEST 4.2` di `tests/test_all_requirements.php` memverifikasi seluruh komponen teks kuitansi dan URL `wa.me` lulus 100% (27/27 PASS).
 
 ## Completed
 
@@ -25,6 +25,7 @@ Task `T-011` telah berhasil di-merge ke branch `main`. Task `T-012` (Template pe
 | 2026-11-03 | `T-010`: Manajemen paket layanan internet WiFi | branch `feat/T-010-packages-management` | Form CRUD paket WiFi, is_active toggle, referential safety, api/packages.php, 24 test lolos |
 | 2026-11-08 | `T-011`: Pencarian pelanggan dan filter status tagihan | branch `feat/T-011-filter-search` | Pencarian kode/nama/kontak/IP & filter paket di customers.php, filter status lunas/belum lunas & invoice di bills.php, API search, safe PDO params, 25 test lolos |
 | 2026-11-08 | `T-012`: Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar | branch `feat/T-012-wa-notification-template` | Template WhatsApp dual-channel (Online QR & Offline Tunai Pas), tombol aksi WA di bills.php, api/bills.php get_wa_billing, 26 test lolos |
+| 2026-11-08 | `T-013`: Template pesan WhatsApp konfirmasi pelunasan | branch `feat/T-013-wa-receipt-template` | Kuitansi digital WhatsApp nomor transaksi resmi INV/..., tombol Kuitansi WA di bills.php & modal struk app.js, 27 test lolos |
 
 ## In Progress
 
@@ -60,3 +61,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-011 | Implementasi pencarian cepat dan filter multi-kriteria: pencarian kode/nama/kontak/IP & filter paket di customers.php, filter status lunas/belum lunas & pencarian invoice di bills.php, endpoint API search api/customers.php & api/bills.php, penanganan safe named parameter PDO, serta penambahan uji otomatis TEST 7.1 di test_all_requirements.php (25/25 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-012
 
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-012 | Implementasi template WhatsApp penagihan dual-channel (F4/R2): helper buildBillingWhatsAppMessage & buildBillingWhatsAppUrl di helpers.php, tombol kirim WA di bills.php, endpoint API get_wa_billing di api/bills.php, instruksi tunai pas, dan pengujian TEST 4.1 (26/26 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-013
+- 2026-11-08 | Antigravity AI & Saiful Islam | T-013 | Implementasi template WhatsApp konfirmasi pelunasan / kuitansi digital resmi (F4): helper buildPaymentReceiptWhatsAppMessage & buildPaymentReceiptWhatsAppUrl di helpers.php, tombol Kuitansi WA di bills.php, integrasi showReceiptModal di app.js, endpoint get_wa_receipt di api/bills.php, dan pengujian TEST 4.2 (27/27 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-014
