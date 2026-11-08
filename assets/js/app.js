@@ -184,6 +184,25 @@ function showReceiptModal(receiptData) {
         }
     }
 
+    // Dynamic Footer Texts (T-022)
+    if (receiptData.receipt_footer) {
+        const fLines = receiptData.receipt_footer.split('\n').map(l => l.trim()).filter(Boolean);
+        const f1 = document.getElementById('receiptCardFooterText1');
+        const f2 = document.getElementById('receiptCardFooterText2');
+        if (f1 && fLines[0]) f1.textContent = fLines[0];
+        if (f2 && fLines[1]) f2.textContent = fLines[1];
+
+        const thFooter = document.getElementById('thermalReceiptFooter');
+        if (thFooter && fLines.length > 0) {
+            thFooter.textContent = '';
+            fLines.forEach(l => {
+                const div = document.createElement('div');
+                div.textContent = l;
+                thFooter.appendChild(div);
+            });
+        }
+    }
+
     // Configure WhatsApp Button link (T-013: use server-generated receipt URL or structured template)
     const waBtn = document.getElementById('btnShareWhatsApp');
     if (waBtn) {
@@ -613,9 +632,20 @@ function renderReceiptCanvasFallback(receiptData) {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#94a3b8';
     ctx.font = '13px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(data.receipt_footer_line1 || 'Terima kasih atas pembayaran Anda.', width / 2, footerY + 30);
+
+    let footer1 = data.receipt_footer_line1;
+    let footer2 = data.receipt_footer_line2;
+    if (data.receipt_footer) {
+        const lines = data.receipt_footer.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines[0]) footer1 = lines[0];
+        if (lines[1]) footer2 = lines[1];
+    }
+    if (!footer1) footer1 = 'Terima kasih atas pembayaran Anda.';
+    if (!footer2) footer2 = 'Simpan struk ini sebagai bukti transaksi resmi yang sah.';
+
+    ctx.fillText(footer1, width / 2, footerY + 30);
     ctx.font = '12px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(data.receipt_footer_line2 || 'Simpan struk ini sebagai bukti transaksi resmi yang sah.', width / 2, footerY + 50);
+    ctx.fillText(footer2, width / 2, footerY + 50);
 
     return canvas;
 }
