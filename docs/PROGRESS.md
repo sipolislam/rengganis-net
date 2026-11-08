@@ -31,7 +31,7 @@ Task `T-015` (Desain antarmuka modal struk pembayaran) telah selesai dikerjakan 
 
 ## In Progress
 
-- `T-015`: Desain antarmuka modal struk pembayaran (branch `feat/T-015-receipt-modal-ui`, status `done`, siap merge ke `main`)
+Tidak ada (siap melanjutkan ke task `T-016`)
 
 ## Next Up
 
