@@ -232,13 +232,13 @@ $avgPrice = $totalPackages > 0 ? ($totalPriceSum / $totalPackages) : 0;
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="toggle_active">
                             <input type="hidden" name="id" value="<?= $pkg['id'] ?>">
-                            <button type="submit" class="w-8 h-8 rounded-xl skeuo-btn-secondary <?= $isActive ? 'text-amber-600' : 'text-emerald-600' ?> flex items-center justify-center">
+                            <button type="submit" class="w-9 h-9 sm:w-8 sm:h-8 rounded-xl skeuo-btn-secondary <?= $isActive ? 'text-amber-600' : 'text-emerald-600' ?> flex items-center justify-center touch-target-mobile active:scale-95 transition-transform">
                                 <i class="fa-solid <?= $isActive ? 'fa-pause' : 'fa-play' ?> text-xs"></i>
                             </button>
                         </form>
 
                         <!-- Edit Button -->
-                        <button onclick='openEditPackageModal(<?= $pkgJson ?>)' class="w-8 h-8 rounded-xl skeuo-btn-secondary text-slate-700 flex items-center justify-center" title="Edit Paket">
+                        <button onclick='openEditPackageModal(<?= $pkgJson ?>)' class="w-9 h-9 sm:w-8 sm:h-8 rounded-xl skeuo-btn-secondary text-slate-700 flex items-center justify-center touch-target-mobile active:scale-95 transition-transform" title="Edit Paket">
                             <i class="fa-solid fa-pen text-xs"></i>
                         </button>
 
@@ -248,12 +248,12 @@ $avgPrice = $totalPackages > 0 ? ($totalPriceSum / $totalPackages) : 0;
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= $pkg['id'] ?>">
-                            <button type="submit" class="w-8 h-8 rounded-xl skeuo-btn-secondary text-rose-600 flex items-center justify-center" title="Hapus Paket">
+                            <button type="submit" class="w-9 h-9 sm:w-8 sm:h-8 rounded-xl skeuo-btn-secondary text-rose-600 flex items-center justify-center touch-target-mobile active:scale-95 transition-transform" title="Hapus Paket">
                                 <i class="fa-solid fa-trash text-xs"></i>
                             </button>
                         </form>
                         <?php else: ?>
-                        <span class="w-8 h-8 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center cursor-not-allowed" title="Paket tidak dapat dihapus karena digunakan oleh <?= (int)$pkg['subscriber_count'] ?> pelanggan">
+                        <span class="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center cursor-not-allowed" title="Paket tidak dapat dihapus karena digunakan oleh <?= (int)$pkg['subscriber_count'] ?> pelanggan">
                             <i class="fa-solid fa-lock text-xs"></i>
                         </span>
                         <?php endif; ?>

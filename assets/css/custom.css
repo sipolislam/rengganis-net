@@ -377,7 +377,14 @@ body {
     /* Prevent modal overflow on small mobile viewports (360px-412px) */
     #receiptModal .bg-\[\#edf3f9\],
     #paymentModal .bg-\[\#edf3f9\],
-    #statusModal .bg-\[\#edf3f9\] {
+    #statusModal .bg-\[\#edf3f9\],
+    #addUserModal .bg-\[\#edf3f9\],
+    #editUserModal .bg-\[\#edf3f9\],
+    #addCustomerModal .bg-\[\#edf3f9\],
+    #editCustomerModal .bg-\[\#edf3f9\],
+    #customerDetailModal .bg-\[\#edf3f9\],
+    #addPackageModal .bg-\[\#edf3f9\],
+    #editPackageModal .bg-\[\#edf3f9\] {
         max-height: 94vh;
         overflow-y: auto;
     }
