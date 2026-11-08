@@ -48,7 +48,7 @@ Agen AI hanya boleh mengambil task dengan status `todo` yang seluruh dependensin
 | T-023 | Skrip pengujian otomatis 12 kriteria kebutuhan | Setup | M | done | test/T-023-automated-test-suite | T-008, T-014 | Seluruh 12 tes di tests/test_all_requirements.php menghasilkan 100% PASS |
 | T-024 | Uji operasional lapangan dan responsivitas mobile | F5 | M | done | test/T-024-field-mobile-testing | T-017 | Antarmuka nyaman digunakan di smartphone Android dan uji cetak Bluetooth lapangan sukses |
 | T-025 | Penyempurnaan dokumentasi repositori README | Dokumen | S | done | docs/T-025-readme-documentation | T-023 | README.md memuat seluruh bagian wajib kit dan petunjuk operasional |
-| T-026 | Refleksi akhir dan catatan pembelajaran | Dokumen | S | todo | docs/T-026-final-review-lessons | T-025 | Berkas REVIEW.md dan LESSONS.md terisi lengkap sebagai bahan evaluasi |
+| T-026 | Refleksi akhir dan catatan pembelajaran | Dokumen | S | done | docs/T-026-final-review-lessons | T-025 | Berkas REVIEW.md dan LESSONS.md terisi lengkap sebagai bahan evaluasi |
 
 ## Backlog
 
