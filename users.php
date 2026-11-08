@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = trim($_POST['username'] ?? '');
         $password = trim($_POST['password'] ?? '');
         $name     = trim($_POST['name'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
         $role     = trim($_POST['role'] ?? 'teknisi');
         $role     = in_array($role, ['admin', 'kolektor', 'teknisi']) ? $role : 'teknisi';
         $phone    = trim($_POST['phone'] ?? '');
@@ -30,8 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlash('error', "Username '{$username}' sudah digunakan.");
             } else {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $pdo->prepare("INSERT INTO users (username, password, name, role, phone) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$username, $hash, $name, $role, $phone ?: null]);
+                $stmt = $pdo->prepare("INSERT INTO users (username, password, name, email, role, phone) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$username, $hash, $name, $email ?: null, $role, $phone ?: null]);
                 setFlash('success', "Pengguna {$name} ({$username}) berhasil dibuat dengan peran " . ucfirst($role) . ".");
             }
         } else {
@@ -44,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'edit') {
         $id       = (int)($_POST['id'] ?? 0);
         $name     = trim($_POST['name'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
         $role     = trim($_POST['role'] ?? 'teknisi');
         $role     = in_array($role, ['admin', 'kolektor', 'teknisi']) ? $role : 'teknisi';
         $phone    = trim($_POST['phone'] ?? '');
@@ -52,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($id > 0 && $name) {
             if (!empty($password)) {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $pdo->prepare("UPDATE users SET name = ?, role = ?, phone = ?, password = ? WHERE id = ?");
-                $stmt->execute([$name, $role, $phone ?: null, $hash, $id]);
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, phone = ?, password = ? WHERE id = ?");
+                $stmt->execute([$name, $email ?: null, $role, $phone ?: null, $hash, $id]);
             } else {
-                $stmt = $pdo->prepare("UPDATE users SET name = ?, role = ?, phone = ? WHERE id = ?");
-                $stmt->execute([$name, $role, $phone ?: null, $id]);
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, phone = ? WHERE id = ?");
+                $stmt->execute([$name, $email ?: null, $role, $phone ?: null, $id]);
             }
             setFlash('success', "Data pengguna {$name} berhasil diperbarui.");
         }
@@ -117,6 +119,9 @@ require_once __DIR__ . '/includes/header.php';
                             <td class="py-3.5 px-5">
                                 <div class="font-black text-slate-900"><?= e($u['name']) ?></div>
                                 <div class="font-mono text-[11px] text-blue-600 font-bold">@<?= e($u['username']) ?></div>
+                                <?php if (!empty($u['email'])): ?>
+                                    <div class="text-[10px] text-slate-400 font-mono mt-0.5"><i class="fa-regular fa-envelope text-[9px] mr-1"></i><?= e($u['email']) ?></div>
+                                <?php endif; ?>
                             </td>
                             <td class="py-3.5 px-4">
                                 <?php if ($u['role'] === 'admin'): ?>
@@ -176,6 +181,9 @@ require_once __DIR__ . '/includes/header.php';
                         <div>
                             <h4 class="font-black text-sm text-slate-900 tracking-tight"><?= e($u['name']) ?></h4>
                             <span class="font-mono text-blue-600 font-bold text-xs tracking-tight">@<?= e($u['username']) ?></span>
+                            <?php if (!empty($u['email'])): ?>
+                                <div class="text-[10px] text-slate-500 font-mono mt-0.5"><i class="fa-regular fa-envelope mr-1"></i><?= e($u['email']) ?></div>
+                            <?php endif; ?>
                         </div>
                         <div>
                             <?php if ($u['role'] === 'admin'): ?>
@@ -244,6 +252,10 @@ require_once __DIR__ . '/includes/header.php';
                 <label class="block font-bold text-slate-700 mb-1">Nama Lengkap *</label>
                 <input type="text" name="name" required placeholder="Contoh: Budi Santoso" class="neu-input w-full p-2.5 rounded-xl font-bold">
             </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">Email Akun (untuk Reset OTP) *</label>
+                <input type="email" name="email" required placeholder="user@rengganis.net" class="neu-input w-full p-2.5 rounded-xl font-bold font-mono">
+            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Username *</label>
@@ -290,6 +302,10 @@ require_once __DIR__ . '/includes/header.php';
                 <label class="block font-bold text-slate-700 mb-1">Nama Lengkap *</label>
                 <input type="text" id="editUserName" name="name" required class="neu-input w-full p-2.5 rounded-xl font-bold">
             </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">Email Akun (untuk Reset OTP)</label>
+                <input type="email" id="editUserEmail" name="email" placeholder="user@rengganis.net" class="neu-input w-full p-2.5 rounded-xl font-bold font-mono">
+            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Role / Peran *</label>
@@ -328,6 +344,7 @@ function closeAddUserModal() {
 function openEditUserModal(u) {
     document.getElementById('editUserId').value = u.id;
     document.getElementById('editUserName').value = u.name;
+    document.getElementById('editUserEmail').value = u.email || '';
     document.getElementById('editUserRole').value = u.role;
     document.getElementById('editUserPhone').value = u.phone || '';
     document.getElementById('editUserModal').classList.remove('hidden');
