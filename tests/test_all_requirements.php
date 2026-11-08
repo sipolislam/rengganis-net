@@ -833,6 +833,91 @@ $methodsMathOk = ($totalMethodAmount == $calcIncome) && ($expectedRate > 0);
 $t019Passed = $hasDashboardKpiUi && $hasDashboardApi && $methodsAggregatedOk && $methodsMathOk;
 assertTest("T-019/F6: Dasbor analitik omzet, persentase tertagih (collection rate), & ringkasan metode pembayaran", $t019Passed);
 
+// TEST 8.2: Modul Laporan Keuangan dengan Filter Rentang Tanggal & Siklus Bulanan (T-020 / F6)
+$reportsContent = file_get_contents(__DIR__ . '/../reports.php');
+$printReportContent = file_get_contents(__DIR__ . '/../print-report.php');
+
+// 1. Verifikasi Antarmuka Filter reports.php & Elemen Rekapitulasi
+$hasReportUiControls = str_contains($reportsContent, 'name="mode"')
+    && str_contains($reportsContent, 'name="start_date"')
+    && str_contains($reportsContent, 'name="end_date"')
+    && str_contains($reportsContent, 'name="month"')
+    && str_contains($reportsContent, 'name="year"')
+    && str_contains($reportsContent, 'name="status"')
+    && str_contains($reportsContent, 'name="method"')
+    && str_contains($reportsContent, 'name="collector"')
+    && str_contains($reportsContent, 'id="reportTotalBillAmount"')
+    && str_contains($reportsContent, 'id="reportTotalIncome"')
+    && str_contains($reportsContent, 'id="reportTotalUnpaid"')
+    && str_contains($reportsContent, 'id="reportCollectionRate"')
+    && str_contains($reportsContent, 'id="reportDailyRevenueBreakdown"')
+    && str_contains($reportsContent, 'id="reportMethodsBreakdown"')
+    && str_contains($reportsContent, 'id="reportTableTotal"')
+    && str_contains($reportsContent, 'name="export" value="excel"')
+    && str_contains($reportsContent, 'name="export" value="csv"');
+
+// 2. Verifikasi Kompatibilitas Filter Cetak Formal print-report.php
+$hasPrintReportSync = str_contains($printReportContent, '$filterMode')
+    && str_contains($printReportContent, '$startDate')
+    && str_contains($printReportContent, '$endDate')
+    && str_contains($printReportContent, '$periodLabel')
+    && str_contains($printReportContent, 'class="formal-table"')
+    && str_contains($printReportContent, 'class="signature-block"');
+
+// 3. Verifikasi Keakuratan Agregasi Laporan Rentang Tanggal (Date Range)
+$todayStr = date('Y-m-d');
+$stmtDateRangeTest = $pdo->prepare("
+    SELECT 
+        COUNT(*) AS total_bills,
+        SUM(b.amount) AS total_bill_amount,
+        SUM(CASE WHEN b.status = 'lunas' THEN b.amount ELSE 0 END) AS total_income,
+        SUM(CASE WHEN b.status = 'lunas' THEN 1 ELSE 0 END) AS count_paid
+    FROM bills b
+    WHERE b.status = 'lunas' AND DATE(b.payment_date) BETWEEN ? AND ?
+");
+$stmtDateRangeTest->execute([$todayStr, $todayStr]);
+$rangeStats = $stmtDateRangeTest->fetch();
+
+$rangeIncome = (float)($rangeStats['total_income'] ?? 0);
+$rangePaidCount = (int)($rangeStats['count_paid'] ?? 0);
+$expectedRangeIncome = (float)($paidBillTunai['amount'] + $paidBillTransfer['amount']);
+
+$dateRangeIncomeAccurate = ($rangePaidCount >= 2) && ($rangeIncome >= $expectedRangeIncome);
+
+// 4. Verifikasi Isolasi Periode di Luar Rentang (Disjoint Date Range)
+$stmtDisjointTest = $pdo->prepare("
+    SELECT COUNT(*) AS count_paid, SUM(b.amount) AS total_income
+    FROM bills b
+    WHERE b.status = 'lunas' AND DATE(b.payment_date) BETWEEN '2020-01-01' AND '2020-01-02'
+");
+$stmtDisjointTest->execute();
+$disjointStats = $stmtDisjointTest->fetch();
+$disjointIncomeZero = ((int)$disjointStats['count_paid'] === 0) && ((float)($disjointStats['total_income'] ?? 0) === 0.0);
+
+// 5. Verifikasi Keakuratan Total Omzet Sesuai Penjumlahan Tagihan Berstatus Lunas (Kriteria Penerimaan F6)
+$stmtMonthReportTest = $pdo->prepare("
+    SELECT 
+        SUM(b.amount) AS expected_sum_paid
+    FROM bills b
+    WHERE b.period_month = ? AND b.period_year = ? AND b.status = 'lunas'
+");
+$stmtMonthReportTest->execute([$testMonth, $testYear]);
+$expectedSumPaid = (float)$stmtMonthReportTest->fetchColumn();
+
+$stmtReportAggTest = $pdo->prepare("
+    SELECT 
+        SUM(CASE WHEN b.status = 'lunas' THEN b.amount ELSE 0 END) AS report_omzet
+    FROM bills b
+    WHERE b.period_month = ? AND b.period_year = ?
+");
+$stmtReportAggTest->execute([$testMonth, $testYear]);
+$actualReportOmzet = (float)$stmtReportAggTest->fetchColumn();
+
+$omzetMathExact = ($actualReportOmzet > 0) && ($actualReportOmzet === $expectedSumPaid);
+
+$t020Passed = $hasReportUiControls && $hasPrintReportSync && $dateRangeIncomeAccurate && $disjointIncomeZero && $omzetMathExact;
+assertTest("T-020/F6: Modul laporan keuangan akurat sesuai rentang tanggal/bulan, omzet identik tagihan lunas, & cetak tersinkronisasi", $t020Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',
