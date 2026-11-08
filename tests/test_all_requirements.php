@@ -918,6 +918,93 @@ $omzetMathExact = ($actualReportOmzet > 0) && ($actualReportOmzet === $expectedS
 $t020Passed = $hasReportUiControls && $hasPrintReportSync && $dateRangeIncomeAccurate && $disjointIncomeZero && $omzetMathExact;
 assertTest("T-020/F6: Modul laporan keuangan akurat sesuai rentang tanggal/bulan, omzet identik tagihan lunas, & cetak tersinkronisasi", $t020Passed);
 
+// TEST 8.3: Ekspor Data Laporan Keuangan ke CSV dan Excel (T-021 / F6)
+$stmtBatchExport = $pdo->prepare("
+    SELECT b.*, c.customer_code, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
+           p.name AS package_name, p.speed AS package_speed
+    FROM bills b
+    JOIN customers c ON b.customer_id = c.id
+    JOIN packages p ON c.package_id = p.id
+    WHERE b.period_month = ? AND b.period_year = ?
+    ORDER BY b.status ASC, b.id ASC
+");
+$stmtBatchExport->execute([$testMonth, $testYear]);
+$exportBills = $stmtBatchExport->fetchAll();
+
+$exportAgg = [
+    'total_bills' => count($exportBills),
+    'total_bill_amount' => array_sum(array_column($exportBills, 'amount')),
+    'total_income' => $calcIncome,
+    'count_paid' => $calcPaid,
+    'total_unpaid' => (float)$dashStats['total_unpaid'],
+    'count_unpaid' => (int)$dashStats['count_unpaid'],
+    'collection_rate' => $expectedRate
+];
+
+$exportMeta = [
+    'company_name' => 'Rengganis Net',
+    'company_tagline' => 'Solusi Internet Cepat & Hemat',
+    'company_phone' => '0812-3456-7890',
+    'company_address' => 'Jl. Raya Rengganis No. 45, Sumber Malang',
+    'period_label' => getMonthName($testMonth) . ' ' . $testYear,
+    'filter_status' => 'all',
+    'user_name' => 'Admin Test',
+    'total_cuti' => 2
+];
+
+$csvOutput = buildFinancialReportCsvString($exportBills, $exportAgg, $methodsData, $exportMeta);
+$excelOutput = buildFinancialReportExcelHtml($exportBills, $exportAgg, $methodsData, $exportMeta);
+
+// 1. Verifikasi Validitas Struktur & Integritas Data CSV
+$csvHasBom = str_starts_with($csvOutput, "\xEF\xBB\xBF");
+$csvHasHeaders = str_contains($csvOutput, 'No Invoice') && str_contains($csvOutput, 'Tarif (Rp)');
+$csvHasInvoices = str_contains($csvOutput, $paidBillTunai['bill_number']) && str_contains($csvOutput, $paidBillTransfer['bill_number']);
+$csvHasGrandTotal = str_contains($csvOutput, 'TOTAL KESELURUHAN') && str_contains($csvOutput, (string)$exportAgg['total_bill_amount']);
+$csvHasKpi = str_contains($csvOutput, 'RINGKASAN EKSEKUTIF')
+    && str_contains($csvOutput, 'Total Pemasukan Diterima (Lunas)')
+    && str_contains($csvOutput, (string)$calcIncome)
+    && str_contains($csvOutput, (string)$expectedRate . '%');
+$csvHasMethods = str_contains($csvOutput, 'REKAPITULASI METODE PEMBAYARAN')
+    && str_contains($csvOutput, 'Tunai')
+    && str_contains($csvOutput, 'Transfer BCA');
+
+$csvValid = $csvHasBom && $csvHasHeaders && $csvHasInvoices && $csvHasGrandTotal && $csvHasKpi && $csvHasMethods;
+
+// 2. Verifikasi Validitas Struktur & Integritas Data Excel HTML
+$excelHasXmlNs = str_contains($excelOutput, 'xmlns:x="urn:schemas-microsoft-com:office:excel"');
+$excelHasHeaderInfo = str_contains($excelOutput, 'RENGGANIS NET') && str_contains($excelOutput, getMonthName($testMonth) . ' ' . $testYear);
+$excelHasKpiTable = str_contains($excelOutput, 'RINGKASAN EKSEKUTIF & METRIK KINERJA PENAGIHAN (KPI)')
+    && str_contains($excelOutput, formatRupiah($calcIncome))
+    && str_contains($excelOutput, $expectedRate . '%');
+$excelHasMethodTable = str_contains($excelOutput, 'REKAPITULASI BERDASARKAN METODE PEMBAYARAN')
+    && str_contains($excelOutput, 'Tunai')
+    && str_contains($excelOutput, 'Transfer BCA');
+$excelHasTxTable = str_contains($excelOutput, 'RINCIAN LENGKAP TAGIHAN & TRANSAKSI PELANGGAN')
+    && str_contains($excelOutput, $paidBillTunai['bill_number'])
+    && str_contains($excelOutput, formatRupiah($exportAgg['total_bill_amount']));
+$excelHasSignature = str_contains($excelOutput, 'Admin Operasional') && str_contains($excelOutput, 'Pemilik / Owner Rengganis Net');
+
+$excelValid = $excelHasXmlNs && $excelHasHeaderInfo && $excelHasKpiTable && $excelHasMethodTable && $excelHasTxTable && $excelHasSignature;
+
+// 3. Verifikasi Integrasi Endpoint & Tombol UI reports.php & bills.php
+$reportsPhpContent = file_get_contents(__DIR__ . '/../reports.php');
+$billsPhpContent = file_get_contents(__DIR__ . '/../bills.php');
+
+$uiExportValid = str_contains($reportsPhpContent, 'buildFinancialReportExcelHtml')
+    && str_contains($reportsPhpContent, 'buildFinancialReportCsvString')
+    && str_contains($reportsPhpContent, 'header("Content-Type: application/vnd.ms-excel')
+    && str_contains($reportsPhpContent, 'header(\'Content-Type: text/csv')
+    && str_contains($billsPhpContent, 'export=excel')
+    && str_contains($billsPhpContent, 'export=csv');
+
+$t021Passed = function_exists('buildFinancialReportCsvString') 
+    && function_exists('buildFinancialReportExcelHtml')
+    && $csvValid 
+    && $excelValid 
+    && $uiExportValid;
+
+assertTest("T-021/F6: Ekspor data laporan keuangan ke CSV dan Excel terformat lengkap dengan tabel transaksi, baris grand total, & ringkasan KPI", $t021Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',

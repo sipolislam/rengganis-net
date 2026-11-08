@@ -174,8 +174,24 @@ $stmtAllCollectors = $pdo->query("
 ");
 $availableCollectors = $stmtAllCollectors->fetchAll(PDO::FETCH_COLUMN);
 
+// Common metadata for export handlers (F6 / T-021)
+$exportMeta = [
+    'company_name' => $companyName,
+    'company_tagline' => $companyTagline,
+    'company_phone' => $companyPhone,
+    'company_address' => $companyAddress,
+    'company_email' => $companyEmail,
+    'period_label' => $periodLabel,
+    'filter_mode' => $filterMode,
+    'filter_status' => $filterStatus,
+    'filter_method' => $filterMethod,
+    'filter_collector' => $filterCollector,
+    'user_name' => $_SESSION['user_name'] ?? 'Admin Operasional',
+    'total_cuti' => (int)($custStats['total_cuti'] ?? 0)
+];
+
 // =========================================================================
-// HANDLER 1: EXPORT EXCEL PROFESIONAL (.xls FORMAT)
+// HANDLER 1: EXPORT EXCEL PROFESIONAL (.xls FORMAT - F6 / T-021)
 // =========================================================================
 if ($exportType === 'excel') {
     $safeName = $filterMode === 'date_range' ? "{$startDate}_sd_{$endDate}" : "{$selectedYear}-" . str_pad($selectedMonth, 2, '0', STR_PAD_LEFT);
@@ -185,142 +201,22 @@ if ($exportType === 'excel') {
     header("Pragma: no-cache");
     header("Expires: 0");
 
-    echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-    echo '<head><meta charset="utf-8">';
-    echo '<style>
-        body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-        .title { font-size: 16pt; font-weight: bold; color: #1e3a8a; }
-        .sub-title { font-size: 11pt; color: #475569; }
-        .section-header { font-size: 12pt; font-weight: bold; background-color: #1e3a8a; color: #ffffff; padding: 6px; }
-        .table-header { font-weight: bold; background-color: #e2e8f0; color: #0f172a; text-align: center; border: 1px solid #94a3b8; }
-        .cell { border: 1px solid #cbd5e1; padding: 5px; }
-        .cell-center { border: 1px solid #cbd5e1; padding: 5px; text-align: center; }
-        .cell-right { border: 1px solid #cbd5e1; padding: 5px; text-align: right; }
-        .kpi-label { font-weight: bold; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px; }
-        .kpi-val { font-weight: bold; border: 1px solid #cbd5e1; padding: 6px; text-align: right; }
-        .kpi-sub { border: 1px solid #cbd5e1; padding: 6px; color: #64748b; font-size: 10pt; }
-        .status-lunas { background-color: #dcfce7; color: #166534; font-weight: bold; text-align: center; border: 1px solid #cbd5e1; }
-        .status-unpaid { background-color: #ffe4e6; color: #9f1239; font-weight: bold; text-align: center; border: 1px solid #cbd5e1; }
-        .total-row { font-weight: bold; background-color: #f8fafc; border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a; padding: 6px; }
-    </style></head><body>';
-
-    // Header Perusahaan
-    echo '<table>';
-    echo '<tr><td colspan="10" class="title">' . htmlspecialchars(strtoupper($companyName)) . '</td></tr>';
-    echo '<tr><td colspan="10" class="sub-title">' . htmlspecialchars($companyTagline) . ' | Telp/WA: ' . htmlspecialchars($companyPhone) . '</td></tr>';
-    echo '<tr><td colspan="10" class="sub-title">Alamat: ' . htmlspecialchars($companyAddress) . '</td></tr>';
-    echo '<tr><td colspan="10" style="font-weight: bold; padding-top: 10px; font-size: 13pt;">LAPORAN REKAPITULASI PENAGIHAN & PENDAPATAN</td></tr>';
-    echo '<tr><td colspan="10" style="color: #475569;">Periode: ' . $periodLabel . ' | Tanggal Unduh: ' . date('d/m/Y H:i') . ' WIB | Petugas: ' . htmlspecialchars($_SESSION['user_name'] ?? 'Admin') . '</td></tr>';
-    echo '<tr><td colspan="10"></td></tr>';
-    echo '</table>';
-
-    // TABEL 1: RINGKASAN EKSEKUTIF / KPI
-    echo '<table border="1">';
-    echo '<tr><td colspan="4" class="section-header">1. RINGKASAN EKSEKUTIF & METRIK KINERJA PENAGIHAN</td></tr>';
-    echo '<tr class="table-header"><td>INDIKATOR KINERJA</td><td>KUANTITAS</td><td>TOTAL NOMINAL (RP)</td><td>KETERANGAN / STATUS</td></tr>';
-    echo '<tr><td class="kpi-label">Total Tagihan Terdaftar</td><td class="kpi-val">' . $totalBills . ' Invoice</td><td class="kpi-val">' . formatRupiah($totalBillAmount) . '</td><td class="kpi-sub">Total tagihan dalam filter</td></tr>';
-    echo '<tr><td class="kpi-label">Total Pemasukan Diterima (Lunas)</td><td class="kpi-val" style="color: #166534;">' . $countPaid . ' Terbayar</td><td class="kpi-val" style="color: #166534;">' . formatRupiah($totalIncome) . '</td><td class="kpi-sub" style="background-color: #f0fdf4;">Dana riil kas masuk</td></tr>';
-    echo '<tr><td class="kpi-label">Sisa Tertunggak (Piutang)</td><td class="kpi-val" style="color: #9f1239;">' . $countUnpaid . ' Tertunda</td><td class="kpi-val" style="color: #9f1239;">' . formatRupiah($totalUnpaid) . '</td><td class="kpi-sub" style="background-color: #fff1f2;">Prioritas penagihan lapangan</td></tr>';
-    echo '<tr><td class="kpi-label">Tingkat Kolektibilitas (Collection Rate)</td><td class="kpi-val" style="color: #1d4ed8;">' . $collectionRate . '%</td><td class="kpi-val">-</td><td class="kpi-sub">' . ($collectionRate >= 80 ? 'Efisiensi Sangat Baik' : 'Perlu Peningkatan Penagihan') . '</td></tr>';
-    echo '<tr><td class="kpi-label">Pelanggan Berstatus Cuti (FR-03)</td><td class="kpi-val">' . (int)$custStats['total_cuti'] . ' User</td><td class="kpi-val">-</td><td class="kpi-sub">Otomatis bebas tagihan tanpa akumulasi denda</td></tr>';
-    echo '</table>';
-
-    echo '<br>';
-
-    // TABEL 2: REKAP METODE PEMBAYARAN
-    echo '<table border="1">';
-    echo '<tr><td colspan="4" class="section-header">2. REKAPITULASI BERDASARKAN METODE PEMBAYARAN</td></tr>';
-    echo '<tr class="table-header"><td>METODE PEMBAYARAN</td><td>JUMLAH TRANSAKSI</td><td>TOTAL NOMINAL MASUK (RP)</td><td>KONTRIBUSI (%)</td></tr>';
-    foreach ($methodRows as $m) {
-        $pct = $totalIncome > 0 ? round(($m['total'] / $totalIncome) * 100, 1) : 0;
-        echo '<tr>';
-        echo '<td class="cell" style="font-weight: bold;">' . htmlspecialchars($m['method']) . '</td>';
-        echo '<td class="cell-center">' . $m['count'] . ' Transaksi</td>';
-        echo '<td class="cell-right" style="font-weight: bold;">' . formatRupiah($m['total']) . '</td>';
-        echo '<td class="cell-center">' . $pct . '%</td>';
-        echo '</tr>';
-    }
-    echo '<tr class="total-row"><td>TOTAL KAS MASUK</td><td style="text-align: center;">' . $countPaid . ' Transaksi</td><td style="text-align: right;">' . formatRupiah($totalIncome) . '</td><td style="text-align: center;">100%</td></tr>';
-    echo '</table>';
-
-    echo '<br>';
-
-    // TABEL 3: RINCIAN LENGKAP INVOICE & PELANGGAN
-    echo '<table border="1">';
-    echo '<tr><td colspan="12" class="section-header">3. RINCIAN LENGKAP TAGIHAN & TRANSAKSI PELANGGAN (' . count($bills) . ' DATA)</td></tr>';
-    echo '<tr class="table-header">';
-    echo '<td>NO</td><td>NO INVOICE</td><td>ID PELANGGAN</td><td>NAMA PELANGGAN</td><td>NO TELEPON / WA</td><td>ALAMAT LENGKAP</td><td>PAKET WIFI</td><td>TARIF (RP)</td><td>STATUS</td><td>TANGGAL BAYAR</td><td>METODE BAYAR</td><td>PETUGAS / KASIR</td>';
-    echo '</tr>';
-
-    $no = 1;
-    $grandTotal = 0;
-    foreach ($bills as $b) {
-        $grandTotal += (float)$b['amount'];
-        $isLunas = $b['status'] === 'lunas';
-        echo '<tr>';
-        echo '<td class="cell-center">' . $no++ . '</td>';
-        echo '<td class="cell" style="font-family: Consolas, monospace; font-weight: bold;">' . htmlspecialchars($b['bill_number']) . '</td>';
-        echo '<td class="cell" style="font-family: Consolas, monospace;">' . htmlspecialchars($b['customer_code']) . '</td>';
-        echo '<td class="cell" style="font-weight: bold;">' . htmlspecialchars($b['customer_name']) . '</td>';
-        echo '<td class="cell" style="mso-number-format:\'@\';">' . htmlspecialchars($b['customer_phone']) . '</td>';
-        echo '<td class="cell">' . htmlspecialchars($b['customer_address']) . '</td>';
-        echo '<td class="cell">' . htmlspecialchars($b['package_name']) . '</td>';
-        echo '<td class="cell-right" style="font-weight: bold;">' . formatRupiah($b['amount']) . '</td>';
-        echo '<td class="' . ($isLunas ? 'status-lunas' : 'status-unpaid') . '">' . ($isLunas ? 'LUNAS' : 'BELUM LUNAS') . '</td>';
-        echo '<td class="cell-center">' . ($b['payment_date'] ? date('d/m/Y H:i', strtotime($b['payment_date'])) : '-') . '</td>';
-        echo '<td class="cell">' . htmlspecialchars($b['payment_method'] ?: '-') . '</td>';
-        echo '<td class="cell">' . htmlspecialchars($b['collector_name'] ?: '-') . '</td>';
-        echo '</tr>';
-    }
-
-    echo '<tr class="total-row">';
-    echo '<td colspan="7" style="text-align: right; padding: 8px;">TOTAL KESELURUHAN (' . count($bills) . ' TRANSAKSI):</td>';
-    echo '<td style="text-align: right; padding: 8px; font-size: 12pt; color: #1e3a8a;">' . formatRupiah($grandTotal) . '</td>';
-    echo '<td colspan="4"></td>';
-    echo '</tr>';
-    echo '</table>';
-
-    // Lembar Pengesahan
-    echo '<br><br>';
-    echo '<table>';
-    echo '<tr>';
-    echo '<td colspan="4" style="text-align: center;">Dibuat Oleh,<br><strong>Admin Operasional</strong><br><br><br><br><u>( ' . htmlspecialchars($_SESSION['user_name'] ?? 'Admin') . ' )</u></td>';
-    echo '<td colspan="4"></td>';
-    echo '<td colspan="4" style="text-align: center;">Sumber Malang, ' . formatDate(date('Y-m-d')) . '<br>Mengetahui & Menyetujui,<br><strong>Pemilik / Owner Rengganis Net</strong><br><br><br><br><u>( Pemilik Usaha )</u></td>';
-    echo '</tr>';
-    echo '</table>';
-
-    echo '</body></html>';
+    echo buildFinancialReportExcelHtml($bills, $reportAgg, $methodRows, $exportMeta);
     exit;
 }
 
 // =========================================================================
-// HANDLER 2: EXPORT CSV MURNI
+// HANDLER 2: EXPORT CSV MURNI DENGAN RINGKASAN KPI (F6 / T-021)
 // =========================================================================
 if ($exportType === 'csv') {
     $safeName = $filterMode === 'date_range' ? "{$startDate}_sd_{$endDate}" : "{$selectedYear}-" . str_pad($selectedMonth, 2, '0', STR_PAD_LEFT);
+    $filename = "Data-Tagihan-RengganisNet-{$safeName}.csv";
     header('Content-Type: text/csv; charset=utf-8');
-    header("Content-Disposition: attachment; filename=\"Data-Tagihan-RengganisNet-{$safeName}.csv\"");
-    $output = fopen('php://output', 'w');
-    fputs($output, "\xEF\xBB\xBF");
-    fputcsv($output, ['No Invoice', 'Kode Pelanggan', 'Nama Pelanggan', 'No Telp', 'Alamat', 'Paket WiFi', 'Tarif', 'Status', 'Tanggal Bayar', 'Metode Bayar', 'Kolektor']);
+    header("Content-Disposition: attachment; filename=\"$filename\"");
+    header("Pragma: no-cache");
+    header("Expires: 0");
 
-    foreach ($bills as $b) {
-        fputcsv($output, [
-            $b['bill_number'],
-            $b['customer_code'],
-            $b['customer_name'],
-            $b['customer_phone'],
-            $b['customer_address'],
-            $b['package_name'],
-            $b['amount'],
-            strtoupper($b['status']),
-            $b['payment_date'] ?: '-',
-            $b['payment_method'] ?: '-',
-            $b['collector_name'] ?: '-'
-        ]);
-    }
-    fclose($output);
+    echo buildFinancialReportCsvString($bills, $reportAgg, $methodRows, $exportMeta);
     exit;
 }
 
