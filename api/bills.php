@@ -63,7 +63,7 @@ try {
                 throw new Exception('Gagal memproses pembayaran tagihan');
             }
 
-            // Prepare complete receipt data
+            // Prepare complete receipt data (T-013: with WhatsApp receipt URL and message)
             $receiptData = [
                 'bill_id'          => $paidBill['id'],
                 'bill_number'      => $paidBill['bill_number'],
@@ -88,7 +88,9 @@ try {
                 'company_tagline'  => getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat'),
                 'company_phone'    => getSetting($pdo, 'company_phone', '0812-3456-7890'),
                 'company_address'  => getSetting($pdo, 'company_address', 'Jl. Raya Rengganis No. 45'),
-                'receipt_footer'   => getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti sah.")
+                'receipt_footer'   => getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti sah."),
+                'wa_receipt_url'   => buildPaymentReceiptWhatsAppUrl($paidBill, $pdo),
+                'wa_receipt_msg'   => buildPaymentReceiptWhatsAppMessage($paidBill, $pdo)
             ];
 
             echo json_encode([
@@ -142,7 +144,9 @@ try {
                 'company_tagline'  => getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat'),
                 'company_phone'    => getSetting($pdo, 'company_phone', '0812-3456-7890'),
                 'company_address'  => getSetting($pdo, 'company_address', 'Jl. Raya Rengganis No. 45'),
-                'receipt_footer'   => getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti sah.")
+                'receipt_footer'   => getSetting($pdo, 'receipt_footer', "Terima kasih atas pembayaran Anda.\nSimpan struk ini sebagai bukti sah."),
+                'wa_receipt_url'   => buildPaymentReceiptWhatsAppUrl($b, $pdo),
+                'wa_receipt_msg'   => buildPaymentReceiptWhatsAppMessage($b, $pdo)
             ];
 
             echo json_encode([
@@ -309,6 +313,47 @@ try {
                 'amount_format' => formatRupiah($b['amount']),
                 'message'       => $msg,
                 'wa_url'        => $url
+            ]);
+            break;
+
+        case 'get_wa_receipt':
+            // WhatsApp payment confirmation receipt template & URL (T-013 / F4)
+            $billId = (int)($_GET['id'] ?? 0);
+            if ($billId <= 0) {
+                throw new Exception('ID Tagihan tidak valid');
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT b.*, c.customer_code, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
+                       p.name AS package_name, p.speed AS package_speed
+                FROM bills b
+                JOIN customers c ON b.customer_id = c.id
+                JOIN packages p ON c.package_id = p.id
+                WHERE b.id = ?
+            ");
+            $stmt->execute([$billId]);
+            $b = $stmt->fetch();
+            if (!$b) {
+                throw new Exception('Tagihan tidak ditemukan');
+            }
+
+            $msg = buildPaymentReceiptWhatsAppMessage($b, $pdo);
+            $url = buildPaymentReceiptWhatsAppUrl($b, $pdo);
+
+            echo json_encode([
+                'success'        => true,
+                'bill_id'        => $billId,
+                'bill_number'    => $b['bill_number'],
+                'customer_name'  => $b['customer_name'],
+                'customer_code'  => $b['customer_code'],
+                'customer_phone' => $b['customer_phone'],
+                'wa_number'      => formatWhatsAppNumber($b['customer_phone']),
+                'amount'         => (float)$b['amount'],
+                'amount_format'  => formatRupiah($b['amount']),
+                'payment_date'   => $b['payment_date'],
+                'payment_method' => $b['payment_method'],
+                'message'        => $msg,
+                'wa_url'         => $url
             ]);
             break;
 

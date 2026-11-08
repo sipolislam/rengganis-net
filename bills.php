@@ -361,7 +361,16 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
                                             </span>
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <button onclick='loadAndShowReceipt(<?= $bill['id'] ?>)' class="px-4 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5 text-blue-700">
+                                            <!-- WhatsApp Payment Receipt Button (T-013 / F4) -->
+                                            <?php $waReceiptUrl = buildPaymentReceiptWhatsAppUrl($bill, $pdo); ?>
+                                            <a href="<?= e($waReceiptUrl) ?>" target="_blank"
+                                               class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+                                               title="Kirim Kuitansi Pelunasan via WhatsApp">
+                                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                                                <span class="hidden md:inline">Kuitansi WA</span>
+                                            </a>
+
+                                            <button onclick='loadAndShowReceipt(<?= $bill['id'] ?>)' class="px-3.5 py-2 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center gap-1.5 text-blue-700 shadow-sm">
                                                 <i class="fa-solid fa-receipt text-blue-600"></i> Struk
                                             </button>
                                         <?php endif; ?>
