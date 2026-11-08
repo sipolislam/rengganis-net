@@ -63,7 +63,7 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <!-- Luxury Neo-Skeuomorphic Custom CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="assets/css/custom.css?v=<?= file_exists(__DIR__ . '/../assets/css/custom.css') ? filemtime(__DIR__ . '/../assets/css/custom.css') : '1.0' ?>">
 
     <!-- CSRF Protection Token -->
     <meta name="csrf-token" content="<?= e(generateCsrfToken()) ?>">

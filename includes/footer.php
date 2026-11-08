@@ -436,9 +436,9 @@
         <div style="height: 15mm;"></div>
     </div>
 
-    <!-- Scripts -->
-    <script src="assets/js/bluetooth-print.js"></script>
-    <script src="assets/js/app.js"></script>
+    <!-- Scripts with Cache-Busting -->
+    <script src="assets/js/bluetooth-print.js?v=<?= file_exists(__DIR__ . '/../assets/js/bluetooth-print.js') ? filemtime(__DIR__ . '/../assets/js/bluetooth-print.js') : '1.0' ?>"></script>
+    <script src="assets/js/app.js?v=<?= file_exists(__DIR__ . '/../assets/js/app.js') ? filemtime(__DIR__ . '/../assets/js/app.js') : '1.0' ?>"></script>
     <script>
         // Sidebar Toggle Handler (Desktop & Mobile)
         function toggleSidebar() {
