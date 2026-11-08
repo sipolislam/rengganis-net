@@ -546,6 +546,33 @@
                     }
                 }
 
+                // Update mobile card if on mobile view (T-024)
+                const mobileCard = document.getElementById(`mobile-bill-card-${billId}`);
+                if (mobileCard) {
+                    const statusColMobile = mobileCard.querySelector('.status-col-mobile');
+                    if (statusColMobile) {
+                        statusColMobile.innerHTML = `
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
+                                <span class="led-pulse active-green"></span> Lunas
+                            </span>
+                        `;
+                    }
+                    const actionMobile = mobileCard.querySelector('.action-col-mobile');
+                    if (actionMobile) {
+                        actionMobile.innerHTML = `
+                            ${res.data.wa_receipt_url ? `
+                            <a href="${res.data.wa_receipt_url}" target="_blank"
+                               class="w-1/2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform touch-target-mobile"
+                               title="Kirim Kuitansi Pelunasan via WhatsApp">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> <span>Kuitansi WA</span>
+                            </a>` : ''}
+                            <button onclick='showReceiptModal(${JSON.stringify(res.data)})' class="${res.data.wa_receipt_url ? 'w-1/2' : 'w-full'} py-2.5 px-3 rounded-xl skeuo-btn-secondary text-xs font-black flex items-center justify-center gap-1.5 text-blue-700 shadow-sm active:scale-95 transition-transform touch-target-mobile">
+                                <i class="fa-solid fa-receipt text-blue-600"></i> <span>Struk</span>
+                            </button>
+                        `;
+                    }
+                }
+
                 showToast('Pembayaran berhasil diproses dan berstatus Lunas!');
             } catch (err) {
                 showToast(err.message, 'error');

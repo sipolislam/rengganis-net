@@ -359,3 +359,54 @@ body {
         margin: 0mm;
     }
 }
+
+/* --------------------------------------------------------------------------
+   MOBILE FIELD RESPONSIVENESS & TOUCH ACCESSIBILITY (T-024)
+   Optimized for Android smartphones under direct outdoor sunlight
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+    .touch-target-mobile {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .mobile-card-shadow {
+        box-shadow: 0 4px 14px rgba(166, 180, 200, 0.45), 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Prevent modal overflow on small mobile viewports (360px-412px) */
+    #receiptModal .bg-\[\#edf3f9\],
+    #paymentModal .bg-\[\#edf3f9\],
+    #statusModal .bg-\[\#edf3f9\] {
+        max-height: 94vh;
+        overflow-y: auto;
+    }
+
+    #digitalReceiptCard {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 1.25rem 1rem !important;
+    }
+}
+
+/* Outdoor direct sunlight contrast helpers */
+.sunlight-text-main {
+    color: #0f172a !important;
+}
+
+.sunlight-text-sub {
+    color: #334155 !important;
+}
+
+/* Safe area insets for notched / gesture-bar smartphones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    footer {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    #receiptModal > div,
+    #paymentModal > div,
+    #statusModal > div {
+        margin-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
+

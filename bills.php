@@ -291,7 +291,8 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
                 <?php endif; ?>
             </div>
         <?php else: ?>
-            <div class="overflow-x-auto">
+            <!-- DESKTOP / TABLET VIEW: 7-COLUMN TABLE (hidden on mobile) -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="bg-slate-100/70 text-slate-400 border-b border-slate-200 uppercase font-black text-[10px] tracking-wider">
@@ -391,6 +392,114 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- MOBILE CARD VIEW: FIELD-OPTIMIZED TOUCH CARDS (visible on mobile < md) -->
+            <div class="p-3 sm:p-4 space-y-3.5 block md:hidden">
+                <?php foreach ($bills as $bill): ?>
+                    <?php
+                    $isPaid = ($bill['status'] === 'lunas');
+                    $billJson = htmlspecialchars(json_encode([
+                        'id'               => $bill['id'],
+                        'bill_number'      => $bill['bill_number'],
+                        'customer_id'      => $bill['customer_id'],
+                        'customer_code'    => $bill['customer_code'],
+                        'customer_name'    => $bill['customer_name'],
+                        'customer_phone'   => $bill['customer_phone'],
+                        'customer_address' => $bill['customer_address'],
+                        'period_name'      => getMonthName((int)$bill['period_month']) . ' ' . $bill['period_year'],
+                        'package_name'     => $bill['package_name'],
+                        'package_speed'    => $bill['package_speed'],
+                        'amount'           => (float)$bill['amount'],
+                        'amount_formatted' => formatRupiah($bill['amount'])
+                    ]), ENT_QUOTES, 'UTF-8');
+                    $waMobileNumber = formatWhatsAppNumber($bill['customer_phone']);
+                    $dispMobilePhone = formatDisplayPhone($bill['customer_phone']);
+                    ?>
+                    <div id="mobile-bill-card-<?= $bill['id'] ?>" class="p-4 rounded-2xl neu-inset bg-white/75 border border-white shadow-sm space-y-3 mobile-card-shadow">
+                        <!-- Top: Invoice & Status Pill -->
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">No. Invoice</span>
+                                <span class="font-mono font-bold text-xs text-slate-900 tracking-tight"><?= e($bill['bill_number']) ?></span>
+                            </div>
+                            <div class="status-col-mobile">
+                                <?= getStatusBadge($bill['status']) ?>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="space-y-1">
+                            <div class="font-black text-sm text-slate-900 tracking-tight"><?= e($bill['customer_name']) ?></div>
+                            <div class="flex items-center justify-between text-xs text-slate-600 font-medium">
+                                <span class="font-mono text-blue-700 font-bold"><?= e($bill['customer_code']) ?></span>
+                                <a href="https://wa.me/<?= $waMobileNumber ?>" target="_blank" class="text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> <?= e($dispMobilePhone) ?>
+                                </a>
+                            </div>
+                            <?php if (!empty($bill['customer_address'])): ?>
+                                <div class="text-[11px] text-slate-500 truncate" title="<?= e($bill['customer_address']) ?>">
+                                    <i class="fa-solid fa-location-dot text-[10px] text-slate-400 mr-1"></i><?= e($bill['customer_address']) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Package & Nominal -->
+                        <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Paket Bandwidth</span>
+                                <div class="text-xs font-bold text-slate-800"><?= e($bill['package_name']) ?> <span class="text-blue-600 font-black">(<?= e($bill['package_speed']) ?>)</span></div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Total Tagihan</span>
+                                <div class="text-base font-black text-slate-900 font-mono tracking-tight"><?= formatRupiah($bill['amount']) ?></div>
+                            </div>
+                        </div>
+
+                        <!-- Due Date / Payment Method Status -->
+                        <div class="text-[11px] flex items-center justify-between text-slate-500 font-medium">
+                            <span>Jatuh Tempo: <strong class="<?= $isPaid ? 'text-slate-700' : 'text-rose-600 font-bold' ?>"><?= formatDate($bill['due_date']) ?></strong></span>
+                            <?php if ($isPaid && $bill['payment_method']): ?>
+                                <span class="text-emerald-700 font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-check-double text-[10px]"></i> <?= e($bill['payment_method']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Large Touch Action Buttons for Smartphone Field Operation -->
+                        <div class="pt-1 flex items-center gap-2 action-col-mobile">
+                            <?php if (!$isPaid): ?>
+                                <?php $waBillUrl = buildBillingWhatsAppUrl($bill, $pdo); ?>
+                                <a href="<?= e($waBillUrl) ?>" target="_blank" 
+                                   class="w-1/2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform touch-target-mobile"
+                                   title="Kirim Notifikasi Tagihan WA">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> <span>Kirim WA</span>
+                                </a>
+
+                                <?php if (hasRole(['admin', 'kolektor'])): ?>
+                                <button onclick='openPaymentModal(<?= $billJson ?>)' class="w-1/2 py-2.5 px-3 rounded-xl skeuo-btn-primary text-xs font-black shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-transform touch-target-mobile">
+                                    <i class="fa-solid fa-money-bill-wave"></i> <span>Bayar</span>
+                                </button>
+                                <?php else: ?>
+                                <span class="w-1/2 py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs flex items-center justify-center gap-1.5 touch-target-mobile">
+                                    <i class="fa-solid fa-lock text-[10px]"></i> <span>Kasir Only</span>
+                                </span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <?php $waReceiptUrl = buildPaymentReceiptWhatsAppUrl($bill, $pdo); ?>
+                                <a href="<?= e($waReceiptUrl) ?>" target="_blank"
+                                   class="w-1/2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform touch-target-mobile"
+                                   title="Kirim Kuitansi Pelunasan via WhatsApp">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> <span>Kuitansi WA</span>
+                                </a>
+
+                                <button onclick='loadAndShowReceipt(<?= $bill['id'] ?>)' class="w-1/2 py-2.5 px-3 rounded-xl skeuo-btn-secondary text-xs font-black flex items-center justify-center gap-1.5 text-blue-700 shadow-sm active:scale-95 transition-transform touch-target-mobile">
+                                    <i class="fa-solid fa-receipt text-blue-600"></i> <span>Struk</span>
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
 

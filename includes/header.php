@@ -21,7 +21,12 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Sistem Informasi Manajemen Operasional, Penagihan WiFi Bulanan Bebas Tagihan Fiktif Cuti, dan Cetak Struk Bluetooth ESC/POS">
     <title><?= isset($pageTitle) ? e($pageTitle) . ' • Rengganis Net Cyber Panel' : 'Rengganis Net • Luxury WiFi Billing Management' ?></title>
     
     <!-- Google Fonts: Plus Jakarta Sans, Space Grotesk, JetBrains Mono -->
@@ -71,7 +76,7 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
         window.csrfToken = "<?= e(generateCsrfToken()) ?>";
     </script>
 </head>
-<body class="bg-[#e9eff6] text-slate-800 antialiased overflow-hidden flex h-screen select-none">
+<body class="bg-[#e9eff6] text-slate-800 antialiased overflow-hidden flex h-screen h-[100dvh]">
 
     <!-- Mobile Sidebar Backdrop Overlay -->
     <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm hidden md:hidden transition-opacity"></div>

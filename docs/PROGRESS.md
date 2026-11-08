@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-023` telah diselesaikan pada branch `test/T-023-automated-test-suite`. Skrip pengujian otomatis mandiri `tests/test_all_requirements.php` telah direstrukturisasi secara komprehensif menjadi 12 kelompok kriteria kebutuhan resmi yang diturunkan dari PRD (F1–F6), kendali risiko (R1–R3), non-functional requirements (NFR-01, NFR-03), dan setup sistem. Setiap kelompok kriteria memiliki pelacak status kelulusan mandiri, header pelaporan visual terstruktur, serta agregasi hasil sub-pengujian. Seluruh 35 sub-pengujian fungsional lulus 100% (35/35 PASS) dan seluruh 12 kelompok kriteria kebutuhan terpenuhi 100% (12/12 PASS). Blok proteksi `try ... finally` memastikan pembersihan batch uji coba tagihan November 2026 dan berkas sementara berjalan aman terlepas dari hasil eksekusi, serta penanganan kode keluar CLI (`exit(0)` untuk sukses, `exit(1)` untuk kegagalan) aktif untuk integrasi berkelanjutan (CI). Validasi kit `kit/tools/validate.py` bersih (21 PASS, 0 FAIL, 0 WARN). Repositori siap melanjutkan ke task `T-024` (Uji operasional lapangan dan responsivitas mobile).
+Task `T-024` telah diselesaikan pada branch `test/T-024-field-mobile-testing`. Antarmuka aplikasi Rengganis Net telah disempurnakan dan diuji untuk operasional lapangan petugas penagih di smartphone Android di bawah terik sinar matahari: penyediaan tampilan dwimode (*Desktop Table* dan *Mobile Field Cards*) pada modul Tagihan `bills.php` dan Pelanggan `customers.php`, kartu tagihan mobile lengkap dengan nomor invoice, status badge, tombol aksi sekali-sentuh dengan target sentuh nyaman (min 44px) untuk kirim WhatsApp dan bayar tagihan, pembaruan baris kartu mobile secara realtime saat konfirmasi pembayaran berhasil, meta tag PWA Android (`theme-color`, `mobile-web-app-capable`, `100dvh`), kelas kontras tinggi outdoor pada `custom.css`, safe-area inset untuk ponsel Android/iOS modern, serta uji reliabilitas pencetakan Bluetooth ESC/POS lapangan dengan fallback otomatis ke cetak browser dan unduh PNG. Seluruh 36 sub-pengujian di `tests/test_all_requirements.php` lulus 100% (36/36 PASS) dan seluruh 12 kelompok kriteria kebutuhan terpenuhi 100% (12/12 PASS). Validasi kit `kit/tools/validate.py` bersih (21 PASS, 0 FAIL, 0 WARN). Repositori siap melanjutkan ke task `T-025` (Penyempurnaan dokumentasi repositori README).
 
 ## Completed
 
@@ -36,16 +36,16 @@ Task `T-023` telah diselesaikan pada branch `test/T-023-automated-test-suite`. S
 | 2026-11-08 | `T-021`: Ekspor data laporan keuangan ke CSV dan Excel | branch `feat/T-021-export-excel-csv` | Generator Excel HTML & CSV BOM UTF-8 dengan rincian transaksi, grand total, KPI, dan 34 test lolos |
 | 2026-11-08 | `T-022`: Pengaturan profil usaha dan catatan kaki struk | branch `feat/T-022-company-settings` | Form identitas usaha, due date, rekening bank, footer struk thermal, live simulator 58mm, dan 35 test lolos |
 | 2026-11-08 | `T-023`: Skrip pengujian otomatis 12 kriteria kebutuhan | branch `test/T-023-automated-test-suite` | Restrukturisasi test_all_requirements.php ke 12 kelompok kriteria kebutuhan PRD/EVALS, proteksi try/finally, exit code CLI, 12/12 kriteria lolos (100% PASS), 35/35 sub-tes lolos |
+| 2026-11-08 | `T-024`: Uji operasional lapangan dan responsivitas mobile | branch `test/T-024-field-mobile-testing` | Kartu tampilan mobile bills.php & customers.php, touch target >=44px, meta PWA theme-color, safe-area inset, kontras outdoor, dan 36 test lolos |
 
 ## In Progress
 
-Tidak ada (siap melanjutkan ke task `T-024`)
+Tidak ada (siap melanjutkan ke task `T-025`)
 
 ## Next Up
 
-1. `T-024`: Uji operasional lapangan dan responsivitas mobile
-2. `T-025`: Penyempurnaan dokumentasi repositori README
-3. `T-026`: Refleksi akhir dan catatan pembelajaran
+1. `T-025`: Penyempurnaan dokumentasi repositori README
+2. `T-026`: Refleksi akhir dan catatan pembelajaran
 
 ## Blockers
 
@@ -82,3 +82,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-021 | Ekspor data laporan keuangan ke CSV dan Excel (F6): implementasi generator buildFinancialReportExcelHtml & buildFinancialReportCsvString di helpers.php, tabel transaksi 12 kolom, baris grand total, ringkasan eksekutif KPI & metode bayar, tombol ekspor cepat di bills.php, dan penambahan pengujian TEST 8.3 (34/34 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-022
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-022 | Pengaturan profil usaha dan catatan kaki struk (Setup, FR-06, FR-07): perombakan settings.php dengan formulir identitas usaha, due date, rekening bank, catatan kaki struk multi-baris, simulator live thermal 58mm real-time, helper setSetting/getAllSettings, dan penambahan pengujian TEST 8.4 (35/35 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-023
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-023 | Skrip pengujian otomatis 12 kriteria kebutuhan (Setup, PRD F1–F6, R1–R3, NFR-01, NFR-03): restrukturisasi test_all_requirements.php menjadi 12 kelompok kriteria resmi, pelacakan status mandiri, blok pengaman try/finally cleanup basis data, penanganan kode keluar CLI (exit 0/1), dan verifikasi 12/12 kriteria (100% PASS) serta 35/35 sub-tes sukses | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-024
+- 2026-11-08 | Antigravity AI & Saiful Islam | T-024 | Uji operasional lapangan dan responsivitas mobile (F5): implementasi tampilan dwimode (Desktop Table & Mobile Field Cards) di bills.php dan customers.php, touch target >=44px, meta PWA theme-color, safe-area inset, kontras outdoor, pembaruan realtime kartu mobile, dan pengujian TEST 11.6 (36/36 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-025
