@@ -324,13 +324,13 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
         <header class="h-20 flex-shrink-0 bg-gradient-to-b from-[#ffffff] to-[#edf3f9] border-b border-white/80 shadow-[0_4px_14px_rgba(166,180,200,0.3)] px-4 sm:px-8 flex items-center justify-between z-30">
             
             <!-- Left: Sidebar Toggle & Page Title -->
-            <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl neu-flat flex items-center justify-center text-slate-600 hover:text-blue-600 active:scale-95 transition-all">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                <button onclick="toggleSidebar()" class="w-10 h-10 shrink-0 rounded-xl neu-flat flex items-center justify-center text-slate-600 hover:text-blue-600 active:scale-95 transition-all">
                     <i class="fa-solid fa-bars-staggered text-base"></i>
                 </button>
 
-                <div>
-                    <h2 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-tech">
+                <div class="min-w-0">
+                    <h2 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight font-tech truncate max-w-[110px] xs:max-w-[160px] sm:max-w-none">
                         <?= isset($pageTitle) ? e($pageTitle) : 'Overview Panel' ?>
                     </h2>
                     <div class="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5">
@@ -341,7 +341,7 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
             </div>
 
             <!-- Right: Realtime Digital Clock, Day/Night Mode & Quick Action -->
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
                 
                 <!-- Live Clock Widget -->
                 <div class="hidden lg:flex items-center gap-2 neu-inset px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
@@ -351,25 +351,27 @@ $sidebarUnpaidBills = (int)$pdo->query("SELECT COUNT(*) FROM bills WHERE status 
 
                 <!-- Day / Night Mode Toggle Widget (Fitur Tampilan Siang & Malam) -->
                 <div class="flex items-center p-1 rounded-xl neu-inset gap-1 text-xs select-none" id="themeSwitchPill" role="group" aria-label="Mode Tampilan Siang / Malam">
-                    <button type="button" onclick="setTheme('light')" id="themeBtnLight" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer neu-flat bg-white text-amber-600 shadow-sm border border-amber-200/50" title="Beralih ke Tampilan Siang (Light Mode)">
+                    <button type="button" onclick="setTheme('light')" id="themeBtnLight" class="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer neu-flat bg-white text-amber-600 shadow-sm border border-amber-200/50" title="Beralih ke Tampilan Siang (Light Mode)">
                         <i class="fa-solid fa-sun text-xs text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]"></i>
                         <span class="hidden sm:inline text-[11px] font-semibold">Siang</span>
                     </button>
-                    <button type="button" onclick="setTheme('dark')" id="themeBtnDark" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Beralih ke Tampilan Malam (Dark Mode)">
+                    <button type="button" onclick="setTheme('dark')" id="themeBtnDark" class="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Beralih ke Tampilan Malam (Dark Mode)">
                         <i class="fa-solid fa-moon text-xs text-slate-400"></i>
                         <span class="hidden sm:inline text-[11px] font-semibold">Malam</span>
                     </button>
                 </div>
 
-                <!-- Quick Action Button -->
+                <!-- Quick Action Button: Tambah Pelanggan Baru (Tampil di Layar HP & Laptop) -->
                 <?php if (isAdmin()): ?>
-                <a href="customers.php?action=create" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl skeuo-btn-primary text-xs font-bold shadow-md">
-                    <i class="fa-solid fa-plus"></i> Pelanggan Baru
+                <a href="customers.php?action=create" onclick="<?php if ($activePage === 'customers'): ?>openAddCustomerModal(); return false;<?php endif; ?>" class="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl skeuo-btn-primary text-xs font-bold shadow-md active:scale-95 transition-all" title="Tambah Pelanggan Baru">
+                    <i class="fa-solid fa-user-plus text-xs"></i>
+                    <span class="hidden sm:inline">Pelanggan Baru</span>
+                    <span class="inline sm:hidden text-[11px] font-bold">+ Pelanggan</span>
                 </a>
                 <?php endif; ?>
 
                 <!-- User Profile Quick Icon -->
-                <div class="w-10 h-10 rounded-xl neu-flat flex items-center justify-center text-blue-700 dark:text-cyan-400 font-bold text-sm shadow-sm" title="<?= e($currentUser['name']) ?>">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl neu-flat flex items-center justify-center text-blue-700 dark:text-cyan-400 font-bold text-xs sm:text-sm shadow-sm" title="<?= e($currentUser['name']) ?>">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
 
