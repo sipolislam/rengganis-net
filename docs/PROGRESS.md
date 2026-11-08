@@ -32,7 +32,7 @@ Task `T-015` telah berhasil di-merge ke branch `main`. Task `T-016` (Driver Web 
 
 ## In Progress
 
-- `T-016`: Driver Web Bluetooth API printer thermal ESC/POS (branch `feat/T-016-bluetooth-escpos-driver`, status `done`, siap merge ke `main`)
+Tidak ada (siap melanjutkan ke task `T-017`)
 
 ## Next Up
 
