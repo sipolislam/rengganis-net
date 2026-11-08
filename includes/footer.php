@@ -216,9 +216,26 @@
 
             </div>
 
-            <!-- Footer Buttons (Acceptance Criteria: 2 Main Actions + WhatsApp + Close) -->
+            <!-- Footer Buttons & Print Controls (R3 / F5 / T-017) -->
             <div class="p-5 bg-[#edf3f9] border-t border-white/80 space-y-3">
                 
+                <!-- Bluetooth Connection Status & Quick Reconnect (R3 / T-017) -->
+                <div id="btStatusBar" class="neu-inset px-3 py-2 rounded-xl flex items-center justify-between text-xs border border-slate-200/60 bg-slate-100/70">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span id="btStatusIndicator" class="led-pulse active-amber shrink-0" title="Status koneksi Bluetooth"></span>
+                        <div class="truncate">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block leading-tight">Printer Bluetooth</span>
+                            <span id="btStatusText" class="text-xs font-bold text-slate-700 truncate block">Siaga / Belum Tersambung</span>
+                        </div>
+                    </div>
+                    <button type="button" id="btnReconnectBluetooth" onclick="handleReconnectBluetooth()" 
+                            class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-700 hover:bg-blue-50 border border-blue-200 shadow-sm flex items-center gap-1.5 transition-all shrink-0 active:scale-95" 
+                            title="Sambung ulang koneksi ke printer Bluetooth">
+                        <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                        <span>Sambung Ulang</span>
+                    </button>
+                </div>
+
                 <!-- Paper Width Selector (58mm / 80mm ESC/POS - T-016) -->
                 <div class="flex items-center justify-between text-xs px-1 text-slate-500 font-semibold">
                     <span class="flex items-center gap-1.5 text-[11px]">
@@ -231,33 +248,42 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <!-- Main Action Buttons Grid (2x2 Layout) -->
+                <div class="grid grid-cols-2 gap-2.5">
                     
-                    <!-- BUTTON 1: Cetak Thermal (ESC/POS Bluetooth & 58mm window.print) -->
+                    <!-- BUTTON 1: Cetak Thermal (ESC/POS Web Bluetooth) -->
                     <button type="button" id="btnPrintThermal" onclick="handlePrintThermal()" 
-                            class="w-full py-3 px-4 rounded-xl skeuo-btn-dark font-extrabold text-xs flex items-center justify-center gap-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                            class="w-full py-2.5 px-3 rounded-xl skeuo-btn-dark font-extrabold text-xs flex items-center justify-center gap-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
                             title="Cetak struk ke printer thermal Bluetooth (58mm/80mm)">
                         <i class="fa-solid fa-print text-blue-400"></i>
-                        <span>Cetak Thermal</span>
+                        <span class="truncate">Cetak Thermal</span>
                     </button>
 
-                    <!-- BUTTON 2: Unduh Struk Digital (PNG image via html2canvas) -->
+                    <!-- BUTTON 2: Fallback Cetak Browser (@media print 58mm/80mm - R3 / T-017) -->
+                    <button type="button" id="btnPrintBrowser" onclick="handlePrintBrowserFallback()" 
+                            class="w-full py-2.5 px-3 rounded-xl skeuo-btn-secondary font-extrabold text-xs flex items-center justify-center gap-2 text-slate-700 hover:text-slate-900 focus:ring-2 focus:ring-slate-400 focus:outline-none transition-all shadow-sm"
+                            title="Cetak langsung menggunakan dialog print browser (@media print)">
+                        <i class="fa-regular fa-window-maximize text-blue-600"></i>
+                        <span class="truncate">Cetak Browser</span>
+                    </button>
+
+                    <!-- BUTTON 3: Unduh Struk Digital (PNG image via html2canvas) -->
                     <button type="button" id="btnDownloadDigital" onclick="handleDownloadDigitalReceipt()" 
-                            class="w-full py-3 px-4 rounded-xl skeuo-btn-emerald font-extrabold text-xs flex items-center justify-center gap-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                            class="w-full py-2.5 px-3 rounded-xl skeuo-btn-emerald font-extrabold text-xs flex items-center justify-center gap-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-sm"
                             title="Unduh gambar kuitansi format PNG tajam">
                         <i class="fa-solid fa-file-image"></i>
-                        <span>Unduh Digital</span>
+                        <span class="truncate">Unduh PNG</span>
                     </button>
 
-                </div>
+                    <!-- BUTTON 4: Kirim WhatsApp -->
+                    <a id="btnShareWhatsApp" href="#" target="_blank" 
+                       class="w-full py-2.5 px-3 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center justify-center gap-2 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border border-emerald-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-sm"
+                       title="Kirim bukti pembayaran resmi langsung via WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-sm text-emerald-600"></i>
+                        <span class="truncate">Kirim WhatsApp</span>
+                    </a>
 
-                <!-- Secondary Action: WhatsApp Direct Link -->
-                <a id="btnShareWhatsApp" href="#" target="_blank" 
-                   class="w-full py-2.5 px-4 rounded-xl skeuo-btn-secondary text-xs font-bold flex items-center justify-center gap-2 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border border-emerald-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-sm"
-                   title="Kirim bukti pembayaran resmi langsung via WhatsApp">
-                    <i class="fa-brands fa-whatsapp text-sm text-emerald-600"></i>
-                    <span>Kirim Struk via WhatsApp</span>
-                </a>
+                </div>
 
                 <div class="text-center pt-1">
                     <button type="button" onclick="closeReceiptModal()" 

@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-015` telah berhasil di-merge ke branch `main`. Task `T-016` (Driver Web Bluetooth API printer thermal ESC/POS) telah selesai dikerjakan pada branch `feat/T-016-bluetooth-escpos-driver`. Driver printer thermal kelas `BluetoothEscPosPrinter` disempurnakan dengan dukungan dual lebar kertas (58mm 32-kolom & 80mm 48-kolom), 10 service UUID standar/vendor BLE thermal printer, penanganan pemutusan koneksi otomatis (`gattserverdisconnected`), safe chunked packet transmission (100 byte/paket), helper formatting `formatRow`, `center`, dan `wrapText`, serta generator perintah ESC/POS biner (`ESC @`, `ESC t 0`, `GS ! 0x11`, `ESC E 1`, feed, partial cut `GS V 66 0`). Kontrol pemilih lebar kertas struk thermal dinamis terpasang pada modal struk `footer.php` dan terhubung ke `app.js`, serta pengujian otomatis `TEST 7.3` di `tests/test_all_requirements.php` lulus 100% (29/29 PASS).
+Task `T-016` telah berhasil di-merge ke branch `main`. Task `T-017` (Fallback cetak browser dan reconnect printer Bluetooth) telah selesai dikerjakan pada branch `feat/T-017-bluetooth-fallback`. Driver printer thermal `BluetoothEscPosPrinter` disempurnakan dengan penanganan timeout non-blocking (`withTimeout`), metode penyambungan ulang langsung ke perangkat terpasang (`reconnect`), pelacakan status koneksi real-time (`getConnectionStatus`), serta fallback cetak standar browser multi-lebar (`printBrowser` 58mm/80mm). Modal struk di `includes/footer.php` dilengkapi status bar Bluetooth (`#btStatusBar`), lampu indikator status (`#btStatusIndicator`), tombol cepat Sambung Ulang (`#btnReconnectBluetooth`), serta tombol fallback cetak browser eksplisit (`#btnPrintBrowser`). Handler `app.js` (`handlePrintThermal`) dilengkapi penanganan error anggun otomatis tanpa pernah mengalami hang atau crash saat Bluetooth printer mati. Pengujian otomatis `TEST 7.4` di `tests/test_all_requirements.php` lulus 100% (30/30 PASS).
 
 ## Completed
 
@@ -29,16 +29,17 @@ Task `T-015` telah berhasil di-merge ke branch `main`. Task `T-016` (Driver Web 
 | 2026-11-08 | `T-014`: Proses konfirmasi pelunasan multi-metode bayar | branch `feat/T-014-payment-processing` | Pelunasan multi-metode bayar, transaksi atomik anti-dobel status 'belum_lunas', pembaruan baris realtime, 27 test lolos |
 | 2026-11-08 | `T-015`: Desain antarmuka modal struk pembayaran | branch `feat/T-015-receipt-modal-ui` | Desain modal struk visual kartu digital & thermal 58mm, rincian pembayaran lengkap, 2 tombol aksi utama, kuitansi WA, dan 28 test lolos |
 | 2026-11-08 | `T-016`: Driver Web Bluetooth API printer thermal ESC/POS | branch `feat/T-016-bluetooth-escpos-driver` | Driver Web Bluetooth API ESC/POS 58mm/80mm, chunked packet transmission, pemilih lebar kertas, dan 29 test lolos |
+| 2026-11-08 | `T-017`: Fallback cetak browser dan reconnect printer Bluetooth | branch `feat/T-017-bluetooth-fallback` | Fallback cetak browser @media print 58mm/80mm, reconnect Bluetooth, status bar printer, proteksi anti-hang, dan 30 test lolos |
 
 ## In Progress
 
-Tidak ada (siap melanjutkan ke task `T-017`)
+Tidak ada (siap melanjutkan ke task `T-018`)
 
 ## Next Up
 
-1. `T-017`: Fallback cetak browser dan reconnect printer Bluetooth
-2. `T-018`: Render struk digital ke format gambar PNG
-3. `T-019`: Dasbor analitik omzet dan collection rate
+1. `T-018`: Render struk digital ke format gambar PNG
+2. `T-019`: Dasbor analitik omzet dan collection rate
+3. `T-020`: Modul laporan keuangan dan filter tanggal
 
 ## Blockers
 
@@ -68,3 +69,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-014 | Penguatan konfirmasi pelunasan multi-metode bayar (F5): transaksi atomik status 'belum_lunas', validasi metode bayar, pembaruan baris realtime di footer.php, proteksi anti-dobel pelunasan, dan pengujian TEST 7 (27/27 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-015
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-015 | Desain antarmuka modal struk pembayaran (F5): visual kartu digital eksklusif, pratinjau thermal 58mm, 2 tombol aksi utama (Cetak Thermal & Unduh Digital), integrasi kuitansi WhatsApp, handler loadAndShowReceipt global, aksesibilitas keyboard (Esc/Backdrop), dan pengujian TEST 7.2 (28/28 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-016
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-016 | Driver Web Bluetooth API printer thermal ESC/POS (F5): implementasi BluetoothEscPosPrinter, dukungan 58mm (32 col) & 80mm (48 col), 10 service UUID BLE, safe chunked transmission, dan pengujian TEST 7.3 (29/29 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-017
+- 2026-11-08 | Antigravity AI & Saiful Islam | T-017 | Fallback cetak browser dan reconnect printer Bluetooth (F5, R3): implementasi reconnect(), withTimeout() non-blocking, getConnectionStatus(), printBrowser() multi-lebar kertas (58mm/80mm), status bar koneksi & tombol reconnect di footer.php, tombol fallback cetak browser eksplisit, penanganan kegagalan otomatis di app.js, dan pengujian TEST 7.4 (30/30 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-018

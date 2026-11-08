@@ -321,7 +321,7 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   THERMAL PRINT EMULATION & 58MM PRINT CSS
+   THERMAL PRINT EMULATION & 58MM/80MM PRINT CSS (R3 / T-017)
    -------------------------------------------------------------------------- */
 @media print {
     body {
@@ -350,8 +350,12 @@ body {
         background: #ffffff !important;
         box-shadow: none !important;
     }
+    #thermalReceiptPrintArea.paper-80mm {
+        width: 80mm !important;
+        max-width: 80mm !important;
+    }
     @page {
-        size: 58mm auto;
-        margin: 0;
+        size: auto;
+        margin: 0mm;
     }
 }
