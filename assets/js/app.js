@@ -53,35 +53,134 @@ function closePaymentModal() {
 }
 
 /**
+ * Load and Show Receipt Modal by Bill ID (Fetch from API)
+ */
+async function loadAndShowReceipt(billId) {
+    if (!billId) return;
+    try {
+        const response = await fetch(`api/bills.php?action=get_receipt&id=${billId}`);
+        const res = await response.json();
+        if (!res.success) {
+            throw new Error(res.message || 'Gagal memuat kuitansi tagihan');
+        }
+        showReceiptModal(res.data);
+    } catch (err) {
+        showToast('Gagal memuat struk: ' + err.message, 'error');
+    }
+}
+
+/**
  * Open the Post-Payment & General Receipt Modal
- * Acceptance Criteria: When payment is completed, shows 2 main buttons: "Cetak Thermal" and "Unduh Struk Digital"
+ * Acceptance Criteria (F5 / T-015): Modal struk muncul otomatis pasca pelunasan dengan rincian pembayaran lengkap
+ * Menampilkan 2 tombol aksi utama ("Cetak Thermal" & "Unduh Struk Digital") serta kirim kuitansi via WhatsApp.
  */
 function showReceiptModal(receiptData) {
+    if (!receiptData) return;
     window.currentReceiptData = receiptData;
 
+    // Company branding (dynamic fallback)
+    const compName = receiptData.company_name || 'RENGGANIS NET';
+    const compTagline = receiptData.company_tagline || 'Solusi Internet Cepat & Hemat';
+    const compPhone = receiptData.company_phone || '0812-3456-7890';
+    const compAddress = receiptData.company_address || 'Jl. Raya Rengganis No. 45';
+
+    const cardCompanyEl = document.getElementById('receiptCardCompany');
+    if (cardCompanyEl) cardCompanyEl.textContent = compName;
+    const cardTaglineEl = document.getElementById('receiptCardTagline');
+    if (cardTaglineEl) cardTaglineEl.textContent = compTagline;
+    const cardContactEl = document.getElementById('receiptCardContact');
+    if (cardContactEl) cardContactEl.textContent = `${compAddress} • CS: ${compPhone}`;
+
     // Populate Digital Card
-    document.getElementById('receiptCardNumber').textContent = receiptData.bill_number;
-    document.getElementById('receiptCardDate').textContent = receiptData.payment_date || receiptData.date;
-    document.getElementById('receiptCardCode').textContent = receiptData.customer_code;
-    document.getElementById('receiptCardCust').textContent = receiptData.customer_name;
-    document.getElementById('receiptCardAddress').textContent = receiptData.customer_address || '-';
-    document.getElementById('receiptCardPeriod').textContent = receiptData.period;
-    document.getElementById('receiptCardPkg').textContent = receiptData.package_name + ' (' + (receiptData.package_speed || '') + ')';
-    document.getElementById('receiptCardAmount').textContent = receiptData.amount_formatted;
-    document.getElementById('receiptCardMethod').textContent = receiptData.payment_method || 'Tunai';
-    document.getElementById('receiptCardCollector').textContent = receiptData.collector_name || 'Admin';
+    const numEl = document.getElementById('receiptCardNumber');
+    if (numEl) numEl.textContent = receiptData.bill_number || '-';
+
+    const dateEl = document.getElementById('receiptCardDate');
+    if (dateEl) dateEl.textContent = receiptData.payment_date || receiptData.date || '-';
+
+    const codeEl = document.getElementById('receiptCardCode');
+    if (codeEl) codeEl.textContent = receiptData.customer_code || '-';
+
+    const custEl = document.getElementById('receiptCardCust');
+    if (custEl) custEl.textContent = receiptData.customer_name || '-';
+
+    const addrEl = document.getElementById('receiptCardAddress');
+    if (addrEl) {
+        addrEl.textContent = receiptData.customer_address || '-';
+        addrEl.title = receiptData.customer_address || '';
+    }
+
+    const perEl = document.getElementById('receiptCardPeriod');
+    if (perEl) perEl.textContent = receiptData.period || '-';
+
+    const pkgEl = document.getElementById('receiptCardPkg');
+    if (pkgEl) {
+        const speedSuffix = receiptData.package_speed ? ` (${receiptData.package_speed})` : '';
+        pkgEl.textContent = (receiptData.package_name || '-') + speedSuffix;
+    }
+
+    const amtEl = document.getElementById('receiptCardAmount');
+    if (amtEl) amtEl.textContent = receiptData.amount_formatted || 'Rp 0';
+
+    const methodEl = document.getElementById('receiptCardMethod');
+    if (methodEl) methodEl.textContent = receiptData.payment_method || 'Tunai';
+
+    const collEl = document.getElementById('receiptCardCollector');
+    if (collEl) collEl.textContent = receiptData.collector_name || 'Admin';
+
+    // Optional Notes Row
+    const notesRow = document.getElementById('receiptCardNotesRow');
+    const notesEl = document.getElementById('receiptCardNotes');
+    if (notesRow && notesEl) {
+        if (receiptData.notes && receiptData.notes.trim()) {
+            notesEl.textContent = receiptData.notes.trim();
+            notesRow.classList.remove('hidden');
+        } else {
+            notesRow.classList.add('hidden');
+        }
+    }
 
     // Populate Hidden Thermal Print Emulation
-    document.getElementById('thermalBillNumber').textContent = receiptData.bill_number;
-    document.getElementById('thermalDate').textContent = receiptData.payment_date || receiptData.date;
-    document.getElementById('thermalCode').textContent = receiptData.customer_code;
-    document.getElementById('thermalCust').textContent = receiptData.customer_name;
-    document.getElementById('thermalAddress').textContent = receiptData.customer_address || '-';
-    document.getElementById('thermalPeriod').textContent = receiptData.period;
-    document.getElementById('thermalPkg').textContent = receiptData.package_name;
-    document.getElementById('thermalAmount').textContent = receiptData.amount_formatted;
-    document.getElementById('thermalMethod').textContent = receiptData.payment_method || 'Tunai';
-    document.getElementById('thermalCollector').textContent = receiptData.collector_name || 'Admin';
+    const thCompName = document.getElementById('thermalCompanyName');
+    if (thCompName) thCompName.textContent = compName;
+    const thCompTagline = document.getElementById('thermalCompanyTagline');
+    if (thCompTagline) thCompTagline.textContent = compTagline;
+    const thCompPhone = document.getElementById('thermalCompanyPhone');
+    if (thCompPhone) thCompPhone.textContent = `Telp: ${compPhone}`;
+    const thCompAddr = document.getElementById('thermalCompanyAddress');
+    if (thCompAddr) thCompAddr.textContent = compAddress;
+
+    const thNum = document.getElementById('thermalBillNumber');
+    if (thNum) thNum.textContent = receiptData.bill_number || '-';
+    const thDate = document.getElementById('thermalDate');
+    if (thDate) thDate.textContent = receiptData.payment_date || receiptData.date || '-';
+    const thCode = document.getElementById('thermalCode');
+    if (thCode) thCode.textContent = receiptData.customer_code || '-';
+    const thCust = document.getElementById('thermalCust');
+    if (thCust) thCust.textContent = receiptData.customer_name || '-';
+    const thAddr = document.getElementById('thermalAddress');
+    if (thAddr) thAddr.textContent = receiptData.customer_address || '-';
+    const thPer = document.getElementById('thermalPeriod');
+    if (thPer) thPer.textContent = receiptData.period || '-';
+    const thPkg = document.getElementById('thermalPkg');
+    if (thPkg) thPkg.textContent = receiptData.package_name || '-';
+    const thAmt = document.getElementById('thermalAmount');
+    if (thAmt) thAmt.textContent = receiptData.amount_formatted || 'Rp 0';
+    const thMethod = document.getElementById('thermalMethod');
+    if (thMethod) thMethod.textContent = receiptData.payment_method || 'Tunai';
+    const thColl = document.getElementById('thermalCollector');
+    if (thColl) thColl.textContent = receiptData.collector_name || 'Admin';
+
+    const thNotesRow = document.getElementById('thermalNotesRow');
+    const thNotes = document.getElementById('thermalNotes');
+    if (thNotesRow && thNotes) {
+        if (receiptData.notes && receiptData.notes.trim()) {
+            thNotes.textContent = receiptData.notes.trim();
+            thNotesRow.style.display = 'flex';
+        } else {
+            thNotesRow.style.display = 'none';
+        }
+    }
 
     // Configure WhatsApp Button link (T-013: use server-generated receipt URL or structured template)
     const waBtn = document.getElementById('btnShareWhatsApp');
@@ -94,7 +193,7 @@ function showReceiptModal(receiptData) {
                 phone = '62' + phone.substring(1);
             }
             const text = `*BUKTI PEMBAYARAN SAH (KUITANSI DIGITAL)*\n` +
-                `*Rengganis Net* - Solusi Internet Cepat & Hemat\n` +
+                `*${compName}* - ${compTagline}\n` +
                 `---------------------------------------------\n` +
                 `Terima kasih! Pembayaran tagihan internet WiFi Anda telah kami terima dan diverifikasi.\n\n` +
                 `📄 No. Transaksi / Kuitansi : *${receiptData.bill_number}*\n` +
@@ -108,20 +207,30 @@ function showReceiptModal(receiptData) {
                 `✅ Status Pembayaran : *LUNAS (SAH)*\n\n` +
                 `---------------------------------------------\n` +
                 `Simpan bukti pembayaran ini sebagai bukti sah transaksi.\n` +
-                `📞 Bantuan & Layanan: 0812-3456-7890`;
+                `📞 Bantuan & Layanan: ${compPhone}`;
             waBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
         }
     }
 
     const modal = document.getElementById('receiptModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Auto-focus primary print button for keyboard accessibility
+        setTimeout(() => {
+            const printBtn = document.getElementById('btnPrintThermal');
+            if (printBtn) printBtn.focus();
+        }, 100);
+    }
 }
 
 function closeReceiptModal() {
     const modal = document.getElementById('receiptModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
 }
 
 /**
@@ -263,4 +372,25 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleModalStatusNotices(oldStatus, e.target.value);
         });
     }
+
+    // Keyboard accessibility: ESC key to close active modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const receiptModal = document.getElementById('receiptModal');
+            if (receiptModal && !receiptModal.classList.contains('hidden')) {
+                closeReceiptModal();
+                return;
+            }
+            const payModal = document.getElementById('paymentModal');
+            if (payModal && !payModal.classList.contains('hidden')) {
+                closePaymentModal();
+                return;
+            }
+            const statusModal = document.getElementById('statusModal');
+            if (statusModal && !statusModal.classList.contains('hidden')) {
+                closeStatusModal();
+                return;
+            }
+        }
+    });
 });
