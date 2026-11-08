@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-019` telah berhasil di-merge ke branch `main`. Halaman utama `index.php` telah dirombak dengan tampilan konsol neo-skeuomorphic futuristik, filter interaktif periode bulan & tahun, 4 kartu KPI utama (Omzet Lunas, Tagihan Tertunggak, Collection Rate %, dan Pelanggan Aktif/Cuti), seksi analitik metode pembayaran (`#paymentMethodsBreakdown` Tunai vs Transfer vs QRIS), rekapitulasi setoran kasir & kolektor lapangan (`#collectorPerformanceBreakdown`), tabel prioritas penagihan belum lunas dengan aksi Bayar & WhatsApp, serta endpoint API `api/dashboard.php`. Seluruh 32 pengujian otomatis di `tests/test_all_requirements.php` lulus 100% (32/32 PASS). Repositori siap melanjutkan pengerjaan task `T-020` (Modul laporan keuangan dan filter tanggal).
+Task `T-020` telah diselesaikan pada branch `feat/T-020-financial-reports`. Modul laporan keuangan `reports.php` telah dimutakhirkan dengan sistem filter dwimode interaktif: filter rentang tanggal (`start_date` dan `end_date`) untuk realisasi kas riil dan siklus bulanan (`month` dan `year`) untuk rekonsiliasi tagihan periodik, disertai opsi filter status pembayaran, metode bayar (Tunai, Transfer BCA, BRI, QRIS), dan petugas/kolektor. Antarmuka menyajikan 4 kartu KPI finansial presisi (`#reportTotalBillAmount`, `#reportTotalIncome`, `#reportTotalUnpaid`, `#reportCollectionRate`), seksi saluran kas masuk per metode bayar (`#reportMethodsBreakdown`), tren penerimaan kas harian (`#reportDailyRevenueBreakdown`), serta rincian seluruh invoice pelanggan dengan baris grand total (`#reportTableTotal`). Modul pratinjau cetak A4 resmi `print-report.php` telah disinkronkan secara menyeluruh dengan parameter filter aktif. Seluruh 33 pengujian otomatis di `tests/test_all_requirements.php` lulus 100% (33/33 PASS). Repositori siap melanjutkan ke task `T-021` (Ekspor data laporan keuangan ke CSV dan Excel).
 
 ## Completed
 
@@ -32,16 +32,17 @@ Task `T-019` telah berhasil di-merge ke branch `main`. Halaman utama `index.php`
 | 2026-11-08 | `T-017`: Fallback cetak browser dan reconnect printer Bluetooth | branch `feat/T-017-bluetooth-fallback` | Fallback cetak browser @media print 58mm/80mm, reconnect Bluetooth, status bar printer, proteksi anti-hang, dan 30 test lolos |
 | 2026-11-08 | `T-018`: Render struk digital ke format gambar PNG | branch `feat/T-018-digital-receipt-png` | Render struk digital PNG resolusi tinggi (html2canvas scale 3x & fallback Canvas 2D native), nama berkas otomatis, dan 31 test lolos |
 | 2026-11-08 | `T-019`: Dasbor analitik omzet dan collection rate | branch `feat/T-019-dashboard-analytics` | Dasbor KPI omzet, collection rate, ringkasan metode bayar tunai/transfer, rekap kasir, filter periode, api/dashboard.php, dan 32 test lolos |
+| 2026-11-08 | `T-020`: Modul laporan keuangan dan filter tanggal | branch `feat/T-020-financial-reports` | Filter dwimode rentang tanggal & bulanan, filter status/metode/kolektor, tren harian, print-report.php sinkron, dan 33 test lolos |
 
 ## In Progress
 
-Tidak ada (siap melanjutkan ke task `T-020`)
+Tidak ada (siap melanjutkan ke task `T-021`)
 
 ## Next Up
 
-1. `T-020`: Modul laporan keuangan dan filter tanggal
-2. `T-021`: Ekspor data laporan keuangan ke CSV dan Excel
-3. `T-022`: Pengaturan profil usaha dan catatan kaki struk
+1. `T-021`: Ekspor data laporan keuangan ke CSV dan Excel
+2. `T-022`: Pengaturan profil usaha dan catatan kaki struk
+3. `T-023`: Skrip pengujian otomatis 12 kriteria kebutuhan
 
 ## Blockers
 
@@ -74,3 +75,4 @@ Format entri: `tanggal | siapa (manusia atau nama alat) | task | hasil | catatan
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-017 | Fallback cetak browser dan reconnect printer Bluetooth (F5, R3): implementasi reconnect(), withTimeout() non-blocking, getConnectionStatus(), printBrowser() multi-lebar kertas (58mm/80mm), status bar koneksi & tombol reconnect di footer.php, tombol fallback cetak browser eksplisit, penanganan kegagalan otomatis di app.js, dan pengujian TEST 7.4 (30/30 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-018
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-018 | Render struk digital ke format gambar PNG (F5): implementasi exportReceiptAsPng, getSafeReceiptFilename, fallback renderReceiptCanvasFallback 2D Canvas native (High-DPI Retina scale 3x), penanganan error unduhan di app.js, dan pengujian TEST 7.5 (31/31 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-019
 - 2026-11-08 | Antigravity AI & Saiful Islam | T-019 | Dasbor analitik omzet dan collection rate (F6): implementasi KPI omzet, persentase tertagih, ringkasan metode bayar (Tunai vs Transfer vs QRIS), rekapitulasi setoran kasir/kolektor, filter periode bulan/tahun, api/dashboard.php, dan pengujian TEST 8.1 (32/32 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-020
+- 2026-11-08 | Antigravity AI & Saiful Islam | T-020 | Modul laporan keuangan dan filter tanggal (F6): implementasi filter dwimode rentang tanggal & siklus bulanan, 4 kartu KPI omzet presisi, breakdown tren kas masuk harian, breakdown metode bayar, filter kolektor, sinkronisasi print-report.php, dan penambahan pengujian TEST 8.2 (33/33 PASS) | Siap direview manusia sebelum merge ke main, lalu lanjut ke T-021

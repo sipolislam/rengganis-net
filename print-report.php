@@ -10,9 +10,33 @@ requireAdmin();
 
 $pdo = getDB();
 
+// 1. Filter Parameters (F6 / T-020)
+$filterMode    = $_GET['mode'] ?? (!empty($_GET['start_date']) || !empty($_GET['end_date']) ? 'date_range' : 'month');
+$startDate     = $_GET['start_date'] ?? '';
+$endDate       = $_GET['end_date'] ?? '';
 $selectedMonth = (int)($_GET['month'] ?? date('n'));
 $selectedYear  = (int)($_GET['year'] ?? date('Y'));
 $filterStatus  = $_GET['status'] ?? 'all'; // all, lunas, belum_lunas
+$filterMethod  = $_GET['method'] ?? 'all';
+$filterCollector = $_GET['collector'] ?? 'all';
+
+// Normalize date range
+if ($filterMode === 'date_range') {
+    if (empty($startDate)) $startDate = date('Y-m-01');
+    if (empty($endDate))   $endDate   = date('Y-m-d');
+    $periodLabel = formatDate($startDate) . ' s/d ' . formatDate($endDate);
+    $docCodePeriod = date('Ymd', strtotime($startDate)) . '-' . date('Ymd', strtotime($endDate));
+    $backLinkParam = "mode=date_range&start_date=" . urlencode($startDate) . "&end_date=" . urlencode($endDate);
+} else {
+    $filterMode = 'month';
+    $periodLabel = getMonthName($selectedMonth) . ' ' . $selectedYear;
+    $docCodePeriod = $selectedYear . str_pad($selectedMonth, 2, '0', STR_PAD_LEFT);
+    $backLinkParam = "mode=month&month={$selectedMonth}&year={$selectedYear}";
+}
+
+$backLinkParam .= "&status=" . urlencode($filterStatus);
+if ($filterMethod !== 'all') $backLinkParam .= "&method=" . urlencode($filterMethod);
+if ($filterCollector !== 'all') $backLinkParam .= "&collector=" . urlencode($filterCollector);
 
 $companyName    = getSetting($pdo, 'company_name', 'Rengganis Net');
 $companyTagline = getSetting($pdo, 'company_tagline', 'Solusi Internet Cepat & Hemat');
@@ -20,20 +44,64 @@ $companyPhone   = getSetting($pdo, 'company_phone', '0812-3456-7890');
 $companyEmail   = getSetting($pdo, 'company_email', 'admin@rengganis.net');
 $companyAddress = getSetting($pdo, 'company_address', 'Jl. Raya Rengganis No. 45, Sumber Malang');
 
-// 1. Overall Aggregates for Selected Month
-$stmtMonth = $pdo->prepare("
+// 2. Build Dynamic SQL Filters (F6 / T-020)
+$whereConditions = [];
+$params = [];
+
+if ($filterMode === 'date_range') {
+    if ($filterStatus === 'lunas') {
+        $whereConditions[] = "b.status = 'lunas' AND DATE(b.payment_date) BETWEEN :start_date AND :end_date";
+        $params[':start_date'] = $startDate;
+        $params[':end_date']   = $endDate;
+    } elseif ($filterStatus === 'belum_lunas') {
+        $whereConditions[] = "b.status = 'belum_lunas' AND b.due_date BETWEEN :start_date AND :end_date";
+        $params[':start_date'] = $startDate;
+        $params[':end_date']   = $endDate;
+    } else {
+        $whereConditions[] = "((b.status = 'lunas' AND DATE(b.payment_date) BETWEEN :start_date1 AND :end_date1) OR (b.status = 'belum_lunas' AND b.due_date BETWEEN :start_date2 AND :end_date2))";
+        $params[':start_date1'] = $startDate;
+        $params[':end_date1']   = $endDate;
+        $params[':start_date2'] = $startDate;
+        $params[':end_date2']   = $endDate;
+    }
+} else {
+    $whereConditions[] = "b.period_month = :m AND b.period_year = :y";
+    $params[':m'] = $selectedMonth;
+    $params[':y'] = $selectedYear;
+
+    if ($filterStatus === 'lunas') {
+        $whereConditions[] = "b.status = 'lunas'";
+    } elseif ($filterStatus === 'belum_lunas') {
+        $whereConditions[] = "b.status = 'belum_lunas'";
+    }
+}
+
+if ($filterMethod !== 'all' && !empty($filterMethod)) {
+    $whereConditions[] = "b.payment_method = :method";
+    $params[':method'] = $filterMethod;
+}
+
+if ($filterCollector !== 'all' && !empty($filterCollector)) {
+    $whereConditions[] = "b.collector_name = :collector";
+    $params[':collector'] = $filterCollector;
+}
+
+$whereClause = implode(' AND ', $whereConditions);
+
+// 3. Overall Aggregates for Selected Filter
+$stmtAgg = $pdo->prepare("
     SELECT 
         COUNT(*) AS total_bills,
-        SUM(amount) AS total_bill_amount,
-        SUM(CASE WHEN status = 'lunas' THEN amount ELSE 0 END) AS total_income,
-        SUM(CASE WHEN status = 'lunas' THEN 1 ELSE 0 END) AS count_paid,
-        SUM(CASE WHEN status = 'belum_lunas' THEN amount ELSE 0 END) AS total_unpaid,
-        SUM(CASE WHEN status = 'belum_lunas' THEN 1 ELSE 0 END) AS count_unpaid
-    FROM bills
-    WHERE period_month = ? AND period_year = ?
+        SUM(b.amount) AS total_bill_amount,
+        SUM(CASE WHEN b.status = 'lunas' THEN b.amount ELSE 0 END) AS total_income,
+        SUM(CASE WHEN b.status = 'lunas' THEN 1 ELSE 0 END) AS count_paid,
+        SUM(CASE WHEN b.status = 'belum_lunas' THEN b.amount ELSE 0 END) AS total_unpaid,
+        SUM(CASE WHEN b.status = 'belum_lunas' THEN 1 ELSE 0 END) AS count_unpaid
+    FROM bills b
+    WHERE {$whereClause}
 ");
-$stmtMonth->execute([$selectedMonth, $selectedYear]);
-$monthAgg = $stmtMonth->fetch();
+$stmtAgg->execute($params);
+$monthAgg = $stmtAgg->fetch();
 
 $totalIncome = (float)($monthAgg['total_income'] ?? 0);
 $totalUnpaid = (float)($monthAgg['total_unpaid'] ?? 0);
@@ -42,44 +110,51 @@ $countUnpaid = (int)($monthAgg['count_unpaid'] ?? 0);
 $totalBills  = (int)($monthAgg['total_bills'] ?? 0);
 $collectionRate = $totalBills > 0 ? round(($countPaid / $totalBills) * 100, 1) : 0;
 
-// 2. Query Detailed Bills with Filter
+// 4. Query Detailed Bills with Filter
 $sql = "
     SELECT b.*, c.customer_code, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
            p.name AS package_name, p.speed AS package_speed
     FROM bills b
     JOIN customers c ON b.customer_id = c.id
     JOIN packages p ON c.package_id = p.id
-    WHERE b.period_month = :m AND b.period_year = :y
+    WHERE {$whereClause}
+    ORDER BY b.status ASC, b.payment_date ASC, b.due_date ASC, b.id ASC
 ";
-$params = [':m' => $selectedMonth, ':y' => $selectedYear];
-
-if ($filterStatus === 'lunas') {
-    $sql .= " AND b.status = 'lunas'";
-} elseif ($filterStatus === 'belum_lunas') {
-    $sql .= " AND b.status = 'belum_lunas'";
-}
-
-$sql .= " ORDER BY b.status ASC, b.payment_date ASC, b.due_date ASC, b.id ASC";
 $stmtBills = $pdo->prepare($sql);
 $stmtBills->execute($params);
 $bills = $stmtBills->fetchAll();
 
-// 3. Payment Methods Breakdown
-$stmtMethods = $pdo->prepare("
-    SELECT 
-        IFNULL(payment_method, 'Tunai') AS method,
-        COUNT(*) AS count,
-        SUM(amount) AS total
-    FROM bills
-    WHERE status = 'lunas' 
-      AND period_month = ? AND period_year = ?
-    GROUP BY payment_method
-    ORDER BY total DESC
-");
-$stmtMethods->execute([$selectedMonth, $selectedYear]);
+// 5. Payment Methods Breakdown
+if ($filterMode === 'date_range') {
+    $stmtMethods = $pdo->prepare("
+        SELECT 
+            IFNULL(payment_method, 'Tunai') AS method,
+            COUNT(*) AS count,
+            SUM(amount) AS total
+        FROM bills
+        WHERE status = 'lunas' 
+          AND DATE(payment_date) BETWEEN ? AND ?
+        GROUP BY payment_method
+        ORDER BY total DESC
+    ");
+    $stmtMethods->execute([$startDate, $endDate]);
+} else {
+    $stmtMethods = $pdo->prepare("
+        SELECT 
+            IFNULL(payment_method, 'Tunai') AS method,
+            COUNT(*) AS count,
+            SUM(amount) AS total
+        FROM bills
+        WHERE status = 'lunas' 
+          AND period_month = ? AND period_year = ?
+        GROUP BY payment_method
+        ORDER BY total DESC
+    ");
+    $stmtMethods->execute([$selectedMonth, $selectedYear]);
+}
 $methods = $stmtMethods->fetchAll();
 
-$reportTitle = "LAPORAN REKAPITULASI PENDAPATAN & PENAGIHAN BULANAN";
+$reportTitle = "LAPORAN REKAPITULASI PENDAPATAN & PENAGIHAN";
 if ($filterStatus === 'lunas') {
     $reportTitle = "LAPORAN REALISASI PEMBAYARAN & PEMASUKAN LUNAS";
 } elseif ($filterStatus === 'belum_lunas') {
@@ -91,7 +166,7 @@ if ($filterStatus === 'lunas') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($reportTitle) ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></title>
+    <title><?= e($reportTitle) ?> - <?= e($periodLabel) ?></title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -372,7 +447,7 @@ if ($filterStatus === 'lunas') {
     <!-- Non-printable Toolbar -->
     <div class="no-print-bar">
         <div style="display: flex; align-items: center; gap: 10px;">
-            <a href="reports.php?month=<?= $selectedMonth ?>&year=<?= $selectedYear ?>" class="btn-action btn-back">
+            <a href="reports.php?<?= $backLinkParam ?>" class="btn-action btn-back">
                 <i class="fa-solid fa-arrow-left"></i> Kembali ke Panel Laporan
             </a>
             <span style="font-size: 12px; color: #64748b;">|</span>
@@ -402,7 +477,7 @@ if ($filterStatus === 'lunas') {
             </div>
             <div style="text-align: right; font-size: 10px; color: #475569;">
                 <div><strong>KODE DOKUMEN:</strong></div>
-                <div class="font-mono" style="font-weight: 700; color: #0f172a;">REP/RNG/<?= $selectedYear ?><?= str_pad($selectedMonth, 2, '0', STR_PAD_LEFT) ?>/<?= strtoupper(substr($filterStatus, 0, 3)) ?></div>
+                <div class="font-mono" style="font-weight: 700; color: #0f172a;">REP/RNG/<?= $docCodePeriod ?>/<?= strtoupper(substr($filterStatus, 0, 3)) ?></div>
             </div>
         </div>
         <div class="kop-border-sub"></div>
@@ -411,7 +486,7 @@ if ($filterStatus === 'lunas') {
         <div class="doc-title-block">
             <h2><?= e($reportTitle) ?></h2>
             <div class="doc-meta">
-                Periode: <strong><?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></strong> &bull;
+                Periode: <strong><?= e($periodLabel) ?></strong> &bull;
                 Filter Status: <strong><?= strtoupper(str_replace('_', ' ', $filterStatus)) ?></strong> &bull;
                 Waktu Cetak: <strong><?= date('d/m/Y H:i') ?> WIB</strong>
             </div>
