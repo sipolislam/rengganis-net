@@ -218,6 +218,19 @@
 
             <!-- Footer Buttons (Acceptance Criteria: 2 Main Actions + WhatsApp + Close) -->
             <div class="p-5 bg-[#edf3f9] border-t border-white/80 space-y-3">
+                
+                <!-- Paper Width Selector (58mm / 80mm ESC/POS - T-016) -->
+                <div class="flex items-center justify-between text-xs px-1 text-slate-500 font-semibold">
+                    <span class="flex items-center gap-1.5 text-[11px]">
+                        <i class="fa-solid fa-scroll text-blue-600"></i>
+                        <span>Format Lebar Struk:</span>
+                    </span>
+                    <div class="inline-flex rounded-xl bg-slate-200/80 p-0.5 border border-slate-300 shadow-inner">
+                        <button type="button" id="btnPaperWidth58" onclick="setReceiptPaperWidth(58)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-sm transition-all" title="Kertas Thermal Mini 58mm (32 Kolom)">58mm</button>
+                        <button type="button" id="btnPaperWidth80" onclick="setReceiptPaperWidth(80)" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all" title="Kertas Thermal Standar 80mm (48 Kolom)">80mm</button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     
                     <!-- BUTTON 1: Cetak Thermal (ESC/POS Bluetooth & 58mm window.print) -->
