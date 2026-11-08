@@ -526,6 +526,73 @@ if ($sampleBillId > 0) {
 $t015Passed = $hasModalContainers && $hasActionButtons && $hasReceiptDataSlots && $hasJsFunctions && $receiptDataComplete;
 assertTest("T-015/F5: Desain antarmuka modal struk memuat kartu digital, thermal preview, rincian lengkap, & tombol aksi", $t015Passed);
 
+// TEST 7.3: Driver Web Bluetooth API Printer Thermal ESC/POS (T-016 / F5)
+$btDriverContent = file_get_contents(__DIR__ . '/../assets/js/bluetooth-print.js');
+
+// 1. Verifikasi Struktur Driver & Dukungan Dual Lebar Kertas (58mm & 80mm)
+$hasBtDriverClass = str_contains($btDriverContent, 'class BluetoothEscPosPrinter')
+    && str_contains($btDriverContent, 'isSupported()')
+    && str_contains($btDriverContent, 'getPrinterServices()')
+    && str_contains($btDriverContent, 'connect()')
+    && str_contains($btDriverContent, 'disconnect()')
+    && str_contains($btDriverContent, 'setPaperWidth')
+    && str_contains($btDriverContent, 'getPaperWidth')
+    && str_contains($btDriverContent, 'buildEscPosCommands')
+    && str_contains($btDriverContent, 'printEscPos')
+    && str_contains($btDriverContent, 'formatRow')
+    && str_contains($btDriverContent, 'wrapText');
+
+// 2. Verifikasi Tombol Pemilih Kertas di footer.php & handler di app.js
+$hasWidthControls = str_contains($footerContent, 'id="btnPaperWidth58"')
+    && str_contains($footerContent, 'id="btnPaperWidth80"')
+    && str_contains($appJsContent, 'function setReceiptPaperWidth(');
+
+// 3. Eksekusi Uji Sintaks & Buffer Generation ESC/POS via Node.js
+$nodeScript = __DIR__ . '/verify_escpos_buffer.js';
+$nodeTestCode = <<< 'NODE_EOF'
+const path = require('path');
+const { BluetoothEscPosPrinter } = require(path.resolve(__dirname, '../assets/js/bluetooth-print.js'));
+const p = new BluetoothEscPosPrinter();
+
+const mock = {
+    company_name: 'RENGGANIS NET',
+    bill_number: 'INV/202611/0001',
+    customer_code: 'RNG-001',
+    customer_name: 'Budi Santoso',
+    customer_address: 'Jl. Rengganis No. 10 RT 01 RW 02',
+    period: 'November 2026',
+    package_name: 'Paket Rumah',
+    package_speed: '10 Mbps',
+    amount_formatted: 'Rp 100.000',
+    payment_method: 'Tunai',
+    collector_name: 'Kasir Utama',
+    payment_date: '08/11/2026 10:00'
+};
+
+const b58 = p.buildEscPosCommands(mock, 58);
+const b80 = p.buildEscPosCommands(mock, 80);
+
+const initOk = (b58[0] === 0x1B && b58[1] === 0x40);
+const cutOk  = (b58[b58.length - 4] === 0x1D && b58[b58.length - 3] === 0x56);
+const widthOk = (b58.length > 500 && b80.length > b58.length);
+
+if (initOk && cutOk && widthOk) {
+    process.stdout.write("ESCPOS_OK");
+} else {
+    process.stdout.write("ESCPOS_FAIL");
+}
+NODE_EOF;
+
+file_put_contents($nodeScript, $nodeTestCode);
+$nodeOutput = shell_exec('node ' . escapeshellarg($nodeScript));
+if (file_exists($nodeScript)) {
+    unlink($nodeScript);
+}
+$escposBufferOk = ($nodeOutput === 'ESCPOS_OK');
+
+$t016Passed = $hasBtDriverClass && $hasWidthControls && $escposBufferOk;
+assertTest("T-016/F5: Driver Web Bluetooth API & buffer byte ESC/POS printer thermal 58mm/80mm", $t016Passed);
+
 // TEST 4.1: WhatsApp Billing Notification Template with Dual-Payment Options (T-012 / F4 / R2)
 $sampleBillT012 = [
     'customer_name'  => 'Agus Prasetyo',

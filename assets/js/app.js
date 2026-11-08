@@ -234,6 +234,32 @@ function closeReceiptModal() {
 }
 
 /**
+ * Switch receipt paper width (58mm / 80mm - T-016)
+ */
+function setReceiptPaperWidth(width) {
+    const w = (parseInt(width, 10) === 80) ? 80 : 58;
+    if (window.thermalPrinter) {
+        window.thermalPrinter.setPaperWidth(w);
+    }
+    try {
+        localStorage.setItem('rengganis_paper_width', String(w));
+    } catch (e) {}
+
+    const btn58 = document.getElementById('btnPaperWidth58');
+    const btn80 = document.getElementById('btnPaperWidth80');
+    if (btn58 && btn80) {
+        if (w === 80) {
+            btn80.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-sm transition-all';
+            btn58.className = 'px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all';
+        } else {
+            btn58.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-sm transition-all';
+            btn80.className = 'px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all';
+        }
+    }
+    showToast(`Format struk diatur untuk printer thermal ${w}mm (${w === 80 ? '48' : '32'} kolom)`);
+}
+
+/**
  * Action: Cetak Thermal Bluetooth ESC/POS with Browser print fallback
  */
 async function handlePrintThermal() {
@@ -372,6 +398,20 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleModalStatusNotices(oldStatus, e.target.value);
         });
     }
+
+    // Initialize paper width button state (T-016)
+    try {
+        const savedWidth = localStorage.getItem('rengganis_paper_width') || '58';
+        if (window.thermalPrinter) {
+            window.thermalPrinter.setPaperWidth(savedWidth);
+        }
+        const btn58 = document.getElementById('btnPaperWidth58');
+        const btn80 = document.getElementById('btnPaperWidth80');
+        if (btn58 && btn80 && savedWidth === '80') {
+            btn80.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-sm transition-all';
+            btn58.className = 'px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all';
+        }
+    } catch (e) {}
 
     // Keyboard accessibility: ESC key to close active modals
     document.addEventListener('keydown', (e) => {
