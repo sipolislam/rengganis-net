@@ -6,7 +6,7 @@ Dokumen hidup. Diperbarui di **akhir setiap sesi** supaya sesi berikutnya (oleh 
 
 Tanggal: 2026-11-08
 
-Task `T-018` telah berhasil di-merge ke branch `main`. Task `T-019` (Dasbor analitik omzet dan collection rate) telah selesai dikerjakan pada branch `feat/T-019-dashboard-analytics`. Halaman utama `index.php` telah dirombak dengan tampilan konsol neo-skeuomorphic futuristik, filter interaktif periode bulan & tahun, 4 kartu KPI utama (Omzet Lunas, Tagihan Tertunggak, Collection Rate %, dan Pelanggan Aktif/Cuti), seksi analitik metode pembayaran (`#paymentMethodsBreakdown` Tunai vs Transfer vs QRIS), rekapitulasi setoran kasir & kolektor lapangan (`#collectorPerformanceBreakdown`), tabel prioritas penagihan belum lunas dengan aksi Bayar & WhatsApp, serta pembuatan endpoint API `api/dashboard.php`. Seluruh 32 pengujian otomatis di `tests/test_all_requirements.php` lulus 100% (32/32 PASS).
+Task `T-019` telah berhasil di-merge ke branch `main`. Halaman utama `index.php` telah dirombak dengan tampilan konsol neo-skeuomorphic futuristik, filter interaktif periode bulan & tahun, 4 kartu KPI utama (Omzet Lunas, Tagihan Tertunggak, Collection Rate %, dan Pelanggan Aktif/Cuti), seksi analitik metode pembayaran (`#paymentMethodsBreakdown` Tunai vs Transfer vs QRIS), rekapitulasi setoran kasir & kolektor lapangan (`#collectorPerformanceBreakdown`), tabel prioritas penagihan belum lunas dengan aksi Bayar & WhatsApp, serta endpoint API `api/dashboard.php`. Seluruh 32 pengujian otomatis di `tests/test_all_requirements.php` lulus 100% (32/32 PASS). Repositori siap melanjutkan pengerjaan task `T-020` (Modul laporan keuangan dan filter tanggal).
 
 ## Completed
 
