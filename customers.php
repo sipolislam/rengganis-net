@@ -237,7 +237,7 @@ $countTabs = $pdo->query("
         </div>
         
         <?php if (isAdmin()): ?>
-        <button onclick="openAddCustomerModal()" class="px-5 py-2.5 rounded-2xl skeuo-btn-primary text-xs font-bold shadow-lg flex items-center justify-center gap-2">
+        <button onclick="openAddCustomerModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-2xl skeuo-btn-primary text-xs font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
             <i class="fa-solid fa-user-plus"></i> Tambah Pelanggan
         </button>
         <?php endif; ?>
@@ -693,6 +693,13 @@ $countTabs = $pdo->query("
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'create') {
+        openAddCustomerModal();
+    }
+});
+
 function openAddCustomerModal() {
     document.getElementById('addCustomerModal').classList.remove('hidden');
     document.getElementById('addCustomerModal').classList.add('flex');
