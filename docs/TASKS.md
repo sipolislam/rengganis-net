@@ -36,7 +36,7 @@ Agen AI hanya boleh mengambil task dengan status `todo` yang seluruh dependensin
 | T-011 | Pencarian pelanggan dan filter status tagihan | F2, F3 | S | done | feat/T-011-filter-search | T-004, T-006 | Pencarian nama/kode dan filter status lunas/belum lunas berfungsi cepat |
 | T-012 | Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar | F4, R2 | M | done | feat/T-012-wa-notification-template | T-006 | Tautan wa.me memuat opsi Online QR dan instruksi bayar Offline Tunai Pas |
 | T-013 | Template pesan WhatsApp konfirmasi pelunasan | F4 | S | done | feat/T-013-wa-receipt-template | T-012 | Tombol WA menghasilkan teks kuitansi resmi dengan nomor transaksi tagihan |
-| T-014 | Proses konfirmasi pelunasan multi-metode bayar | F5 | M | todo | feat/T-014-payment-processing | T-006 | Tagihan berubah lunas, tercatat metode bayar, stempel waktu, dan nama kolektor |
+| T-014 | Proses konfirmasi pelunasan multi-metode bayar | F5 | M | review | feat/T-014-payment-processing | T-006 | Tagihan berubah lunas, tercatat metode bayar, stempel waktu, dan nama kolektor |
 | T-015 | Desain antarmuka modal struk pembayaran | F5 | S | todo | feat/T-015-receipt-modal-ui | T-014 | Modal struk muncul otomatis pasca pelunasan dengan rincian pembayaran lengkap |
 | T-016 | Driver Web Bluetooth API printer thermal ESC/POS | F5 | L | todo | feat/T-016-bluetooth-escpos-driver | T-015 | Buffer byte ESC/POS terkirim via Bluetooth dan tercetak pada printer thermal 58mm/80mm |
 | T-017 | Fallback cetak browser dan reconnect printer Bluetooth | F5, R3 | M | todo | feat/T-017-bluetooth-fallback | T-016 | Sistem tidak hang saat Bluetooth mati; tombol cetak @media print 58mm aktif |
