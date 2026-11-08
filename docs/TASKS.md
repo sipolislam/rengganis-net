@@ -33,7 +33,7 @@ Agen AI hanya boleh mengambil task dengan status `todo` yang seluruh dependensin
 | T-008 | Pencegahan duplikasi tagihan bulanan (idempotensi) | F3, R1 | M | done | feat/T-008-billing-idempotency | T-006 | Eksekusi ulang generate tagihan pada periode sama menghasilkan 0 tagihan baru |
 | T-009 | Reaktivasi pelanggan cuti dengan tagihan bulan berjalan | F2, F3 | M | done | feat/T-009-reaktivasi-cuti | T-007 | Reaktivasi pelanggan dari cuti ke aktif otomatis membuat tagihan periode berjalan |
 | T-010 | Manajemen paket layanan internet WiFi | Setup | S | done | feat/T-010-packages-management | T-003 | Form CRUD paket internet berfungsi dan tarif terhubung ke nominal tagihan |
-| T-011 | Pencarian pelanggan dan filter status tagihan | F2, F3 | S | review | feat/T-011-filter-search | T-004, T-006 | Pencarian nama/kode dan filter status lunas/belum lunas berfungsi cepat |
+| T-011 | Pencarian pelanggan dan filter status tagihan | F2, F3 | S | done | feat/T-011-filter-search | T-004, T-006 | Pencarian nama/kode dan filter status lunas/belum lunas berfungsi cepat |
 | T-012 | Template pesan WhatsApp tagihan dengan 2 cabang opsi bayar | F4, R2 | M | todo | feat/T-012-wa-notification-template | T-006 | Tautan wa.me memuat opsi Online QR dan instruksi bayar Offline Tunai Pas |
 | T-013 | Template pesan WhatsApp konfirmasi pelunasan | F4 | S | todo | feat/T-013-wa-receipt-template | T-012 | Tombol WA menghasilkan teks kuitansi resmi dengan nomor transaksi tagihan |
 | T-014 | Proses konfirmasi pelunasan multi-metode bayar | F5 | M | todo | feat/T-014-payment-processing | T-006 | Tagihan berubah lunas, tercatat metode bayar, stempel waktu, dan nama kolektor |
