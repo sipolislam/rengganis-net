@@ -110,12 +110,23 @@ $isFullyGenerated = ($activeCustomerCount > 0 && $billedActiveCount >= $activeCu
             <p class="text-xs text-slate-500 font-medium">Automasi penerbitan invoice bulanan, verifikasi pelunasan, dan struk thermal</p>
         </div>
 
-        <?php if (isAdmin()): ?>
-        <button onclick="triggerGenerateBills()" class="px-5 py-2.5 rounded-2xl <?= $isFullyGenerated ? 'skeuo-btn-secondary text-slate-700' : 'skeuo-btn-emerald' ?> text-xs font-black shadow-lg flex items-center justify-center gap-2 transition-all">
-            <i class="fa-solid <?= $isFullyGenerated ? 'fa-circle-check text-emerald-500' : 'fa-bolt text-amber-300' ?>"></i> 
-            <?= $isFullyGenerated ? 'Tagihan ' . getMonthName($filterMonth) . ' ' . $filterYear . ' Terbit' : 'Generate Tagihan ' . getMonthName($filterMonth) . ' ' . $filterYear ?>
-        </button>
-        <?php endif; ?>
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Quick Export Excel & CSV (F6 / T-021) -->
+            <a href="reports.php?mode=month&month=<?= $filterMonth ?>&year=<?= $filterYear ?>&status=<?= urlencode($filterStatus) ?>&export=excel" class="px-3.5 py-2.5 rounded-2xl skeuo-btn-secondary text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-sm hover:text-emerald-700" title="Ekspor Data Tagihan Periode Ini ke Excel">
+                <i class="fa-solid fa-file-excel text-emerald-600"></i> Excel
+            </a>
+
+            <a href="reports.php?mode=month&month=<?= $filterMonth ?>&year=<?= $filterYear ?>&status=<?= urlencode($filterStatus) ?>&export=csv" class="px-3 py-2.5 rounded-2xl skeuo-btn-secondary text-xs font-bold text-slate-600 flex items-center gap-1.5 shadow-sm hover:text-blue-700" title="Ekspor Data Tagihan Periode Ini ke CSV">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </a>
+
+            <?php if (isAdmin()): ?>
+            <button onclick="triggerGenerateBills()" class="px-5 py-2.5 rounded-2xl <?= $isFullyGenerated ? 'skeuo-btn-secondary text-slate-700' : 'skeuo-btn-emerald' ?> text-xs font-black shadow-lg flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid <?= $isFullyGenerated ? 'fa-circle-check text-emerald-500' : 'fa-bolt text-amber-300' ?>"></i> 
+                <?= $isFullyGenerated ? 'Tagihan ' . getMonthName($filterMonth) . ' ' . $filterYear . ' Terbit' : 'Generate Tagihan ' . getMonthName($filterMonth) . ' ' . $filterYear ?>
+            </button>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- 3-Column Period Summary Cards (Neumorphic Extrusions) -->

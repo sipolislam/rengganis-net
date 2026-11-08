@@ -43,7 +43,7 @@ Agen AI hanya boleh mengambil task dengan status `todo` yang seluruh dependensin
 | T-018 | Render struk digital ke format gambar PNG | F5 | M | done | feat/T-018-digital-receipt-png | T-015 | Pustaka html2canvas merender struk menjadi gambar PNG tajam yang siap diunduh |
 | T-019 | Dasbor analitik omzet dan collection rate | F6 | M | done | feat/T-019-dashboard-analytics | T-014 | Dasbor menampilkan KPI omzet bulanan, persentase tertagih, dan ringkasan metode |
 | T-020 | Modul laporan keuangan dan filter tanggal | F6 | M | done | feat/T-020-financial-reports | T-014 | Laporan menampilkan total pemasukan yang akurat sesuai rentang tanggal yang dipilih |
-| T-021 | Ekspor data laporan keuangan ke CSV dan Excel | F6 | M | todo | feat/T-021-export-excel-csv | T-020 | Tombol ekspor mengunduh berkas spreadsheet dengan tabel transaksi dan baris ringkasan |
+| T-021 | Ekspor data laporan keuangan ke CSV dan Excel | F6 | M | done | feat/T-021-export-excel-csv | T-020 | Tombol ekspor mengunduh berkas spreadsheet dengan tabel transaksi dan baris ringkasan |
 | T-022 | Pengaturan profil usaha dan catatan kaki struk | Setup | S | todo | feat/T-022-company-settings | T-015 | Form settings memperbarui nama perusahaan, alamat, dan teks footer struk thermal |
 | T-023 | Skrip pengujian otomatis 12 kriteria kebutuhan | Setup | M | todo | test/T-023-automated-test-suite | T-008, T-014 | Seluruh 12 tes di tests/test_all_requirements.php menghasilkan 100% PASS |
 | T-024 | Uji operasional lapangan dan responsivitas mobile | F5 | M | todo | test/T-024-field-mobile-testing | T-017 | Antarmuka nyaman digunakan di smartphone Android dan uji cetak Bluetooth lapangan sukses |
