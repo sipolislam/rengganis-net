@@ -3,9 +3,10 @@
  * Logout script for Rengganis Net
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/helpers.php';
+
+initAppSession();
 
 $_SESSION = [];
 if (ini_get("session.use_cookies")) {
@@ -17,7 +18,9 @@ if (ini_get("session.use_cookies")) {
 }
 session_destroy();
 
-session_start();
+initAppSession();
 $_SESSION['flash_info'] = 'Anda telah berhasil keluar dari sistem.';
+session_write_close();
+
 header('Location: login.php');
 exit;

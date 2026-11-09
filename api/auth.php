@@ -30,7 +30,7 @@ function isLocalEnvironment(): bool {
 
 // Ensure session
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    initAppSession();
 }
 
 // Parse request body if JSON

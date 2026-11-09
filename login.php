@@ -44,6 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['csrf_token']    = bin2hex(random_bytes(32));
 
             setFlash('success', "Selamat datang kembali, {$user['name']}!");
+            
+            // Explicitly commit session to database storage before sending 302 redirect
+            session_write_close();
+
             header('Location: index.php');
             exit;
         } else {

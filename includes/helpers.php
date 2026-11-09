@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/session.php';
 
 // Format Rupiah
 function formatRupiah($amount): string {
@@ -76,12 +77,12 @@ function formatDisplayPhone(?string $phone): string {
 
 // Flash messages
 function setFlash(string $type, string $message): void {
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE) initAppSession();
     $_SESSION['flash_' . $type] = $message;
 }
 
 function getFlash(string $type): ?string {
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE) initAppSession();
     $key = 'flash_' . $type;
     if (isset($_SESSION[$key])) {
         $msg = $_SESSION[$key];
@@ -93,7 +94,7 @@ function getFlash(string $type): ?string {
 
 // CSRF Protection
 function generateCsrfToken(): string {
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE) initAppSession();
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
@@ -101,7 +102,7 @@ function generateCsrfToken(): string {
 }
 
 function verifyCsrfToken(?string $token): bool {
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE) initAppSession();
     if (empty($_SESSION['csrf_token']) || empty($token)) {
         return false;
     }
